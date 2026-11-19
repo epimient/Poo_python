@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 03 — Clases, objetos y atributos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 03 · Unidad 1</p>
+      <h1>Clases, objetos y atributos</h1>
+      <p class="subtitle">El plano, las copias y los datos que las distinguen</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Definir clases con <code>class</code> y crear varias instancias.</li>
+        <li>Inicializar objetos con <code>__init__</code> y <code>self</code>.</li>
+        <li>Distinguir atributos de instancia de atributos de clase.</li>
+        <li>Usar <code>type()</code>, <code>isinstance()</code>, <code>id()</code> y <code>__dict__</code>.</li>
+        <li>Evitar listas compartidas como atributos de clase.</li>
+      </ul>
+      <div class="callout callout--info">Hoy pasas de variables sueltas a entidades con estado propio.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Una clase es un plano; un objeto es una casa</h2>
+      <p>El plano define cuántas habitaciones hay. Cada casa tiene su dirección, sus muebles y su estado. Cambiar una casa no cambia las demás.</p>
+      <div class="flow">
+        <span class="flow-item">class Personaje</span>
+        <span class="flow-item">Personaje("Aria")</span>
+        <span class="flow-item">Personaje("Brom")</span>
+        <span class="flow-item">Personaje("Cyd")</span>
+      </div>
+      <pre><code>class Personaje:
+    pass
+
+aria = Personaje()
+brom = Personaje()
+
+print(aria is brom)                 # False
+print(type(aria).__name__)          # Personaje
+print(isinstance(aria, Personaje))  # True</code></pre>
+      <p><code>is</code> compara identidad, no contenido. Dos objetos con los mismos datos siguen siendo distintos.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 1</p>
+      <h2><code>__init__</code> y <code>self</code></h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, hp: int = 100, nivel: int = 1) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+        self.nivel = nivel
+
+aria = Personaje("Aria", 80, 3)
+brom = Personaje("Brom")
+
+print(aria.hp)   # 80
+print(brom.hp)   # 100</code></pre>
+      <ul>
+        <li><code>__init__</code> se ejecuta al crear el objeto.</li>
+        <li><code>self</code> es el objeto que se está inicializando.</li>
+        <li>Python pasa <code>self</code> solo: no lo escribas al llamar.</li>
+      </ul>
+      <div class="callout callout--warning"><code>__init__</code> debe devolver <code>None</code>. Un <code>return</code> con valor lanza <code>TypeError</code>.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 2</p>
+      <h2>Instancia vs. clase</h2>
+      <pre><code>class Personaje:
+    MAX_HP = 100           # atributo de clase
+    total_personajes = 0   # contador compartido
+
+    def __init__(self, nombre: str, hp: int = MAX_HP) -&gt; None:
+        self.nombre = nombre   # atributo de instancia
+        self.hp = hp
+        Personaje.total_personajes += 1</code></pre>
+      <table>
+        <thead><tr><th></th><th>Instancia</th><th>Clase</th></tr></thead>
+        <tbody>
+          <tr><td>Se define</td><td>con <code>self.x</code></td><td>en el cuerpo de la clase</td></tr>
+          <tr><td>Vive en</td><td><code>objeto.__dict__</code></td><td><code>Clase.__dict__</code></td></tr>
+          <tr><td>Uso</td><td>nombre, hp, nivel</td><td>constantes, contadores</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 3</p>
+      <h2>Un contador que sí es global</h2>
+      <pre><code>aria = Personaje("Aria", 80, 3)
+brom = Personaje("Brom")
+cyd = Personaje("Cyd", 45, 5)
+
+print(Personaje.total_personajes)  # 3
+print(Personaje.MAX_HP)            # 100
+print(aria.MAX_HP)                 # 100 (se lee de la clase)
+
+# MAL: crea un atributo de instancia y tapa el global
+# self.total_personajes += 1
+
+# BIEN: actualiza el contador compartido
+Personaje.total_personajes += 1</code></pre>
+      <div class="callout callout--success">Los atributos de clase se leen desde la instancia, pero se modifican a través de la clase.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Demo</p>
+      <h2>Equipo Alba en ejecución</h2>
+      <pre><code>=== Semana 03: clases, objetos y atributos ===
+Personajes creados al inicio: 0
+
+Equipo Alba
+-----------
+Aria     Nv.3  [########--] 80/100
+Brom     Nv.2  [##########] 100/100
+Cyd      Nv.5  [####------] 45/100
+Nivel combinado: 10 | hp total: 225
+
+Personaje.total_personajes = 3</code></pre>
+      <p><code>personaje.py</code> crea el equipo, calcula totales y demuestra identidad y tipo.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 4</p>
+      <h2><code>__dict__</code>: lo que realmente tiene cada objeto</h2>
+      <pre><code>print(aria.__dict__)
+# {'nombre': 'Aria', 'hp': 80, 'nivel': 3}
+
+print('MAX_HP' in aria.__dict__)  # False
+print(Personaje.__dict__['MAX_HP'])  # 100
+
+cyd.MAX_HP = 120          # crea un atributo propio
+print(cyd.MAX_HP)         # 120
+print(Personaje.MAX_HP)   # 100: la clase no cambió</code></pre>
+      <p><code>__dict__</code> muestra solo el estado propio. Los atributos de clase se buscan en la clase cuando no están en la instancia.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Error clásico</p>
+      <h2>La lista compartida</h2>
+      <pre><code>class Gremio:
+    miembros = []   # ¡una sola lista para todos!
+
+alba = Gremio()
+sombra = Gremio()
+
+alba.miembros.append("Aria")
+print(sombra.miembros)   # ['Aria']  ← desastre</code></pre>
+      <pre><code>class Gremio:
+    def __init__(self, nombre: str) -&gt; None:
+        self.nombre = nombre
+        self.miembros: list[str] = []   # lista propia</code></pre>
+      <div class="callout callout--error">Listas, diccionarios y conjuntos se crean dentro de <code>__init__</code>. Nunca como atributo de clase.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Convenciones</p>
+      <h2>Nombres que se leen solos</h2>
+      <table>
+        <thead><tr><th>Elemento</th><th>Convención</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td>Clase</td><td>PascalCase</td><td><code>Personaje</code>, <code>CuentaBancaria</code></td></tr>
+          <tr><td>Atributo</td><td>snake_case</td><td><code>hp_max</code>, <code>total_personajes</code></td></tr>
+          <tr><td>Constante de clase</td><td>MAYÚSCULAS</td><td><code>MAX_HP</code></td></tr>
+          <tr><td>Instancia</td><td>snake_case, singular</td><td><code>aria</code>, <code>cuenta_ada</code></td></tr>
+        </tbody>
+      </table>
+      <p>La convención no cambia lo que Python ejecuta, pero sí lo que otros programadores entienden en dos segundos.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Los tropiezos de la semana</h2>
+      <ul>
+        <li>Olvidar <code>self</code> en la definición del método.</li>
+        <li>Escribir <code>Personaje</code> cuando querías <code>Personaje()</code>.</li>
+        <li>Inicializar una lista como atributo de clase.</li>
+        <li>Incrementar el contador con <code>self.total_personajes</code>.</li>
+        <li>Suponer que <code>__dict__</code> incluye los atributos de clase.</li>
+      </ul>
+      <div class="callout callout--warning">Antes de crear un atributo, pregúntate: ¿este dato es igual para todos o cambia por objeto?</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Reto</p>
+      <h2>Tienda de ítems</h2>
+      <p>Modela una tienda con una clase <code>Item</code>:</p>
+      <ul>
+        <li>Atributos de instancia: <code>nombre</code>, <code>precio</code>, <code>stock</code>.</li>
+        <li>Atributo de clase: <code>IVA = 0.19</code> y un contador de ítems creados.</li>
+        <li>Crea cuatro ítems, calcula el valor del inventario y muestra cuántos existen.</li>
+      </ul>
+      <div class="callout callout--reto">Comprueba con <code>__dict__</code> que el IVA no está en cada ítem y explica por qué.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Lo que te llevas</h2>
+      <ul>
+        <li>La clase define el tipo; cada objeto guarda su propio estado.</li>
+        <li><code>__init__</code> recibe <code>self</code> y asigna atributos de instancia.</li>
+        <li>Los atributos de clase son constantes y contadores compartidos.</li>
+        <li><code>type()</code>, <code>isinstance()</code>, <code>is</code> e <code>id()</code> revelan qué es cada objeto.</li>
+        <li><code>__dict__</code> enseña el estado real de una instancia.</li>
+      </ul>
+      <div class="callout callout--success">La próxima semana estos datos aprenderán a atacar, curarse y defenderse.</div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / N</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

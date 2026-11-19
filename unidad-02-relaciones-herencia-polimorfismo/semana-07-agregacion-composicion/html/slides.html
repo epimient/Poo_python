@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 07 — Agregación y composición</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 07 · Unidad 2</p>
+      <h1>Agregación y composición</h1>
+      <p class="subtitle">Relaciones todo-parte, dueños y ciclos de vida</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Reconocer una relación <strong>todo-parte</strong>.</li>
+        <li>Distinguir agregación débil de composición fuerte.</li>
+        <li>Implementar ambas con referencias y listas.</li>
+        <li>Decidir quién crea y quién destruye cada parte.</li>
+        <li>Detectar errores de ownership en tu código.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Motivación</p>
+      <h2>«Tiene un» es ambiguo</h2>
+      <div class="comparison">
+        <div>
+          <h3>Equipo tiene jugadores</h3>
+          <p>Si el equipo se disuelve, los jugadores siguen existiendo y se van a otro equipo.</p>
+        </div>
+        <div>
+          <h3>Inventario tiene ítems</h3>
+          <p>Si el inventario desaparece, la espada y las pociones desaparecen con él.</p>
+        </div>
+      </div>
+      <div class="callout callout--info">
+        <p>La pregunta clave: <strong>si borro el todo, ¿la parte debe dejar de existir?</strong></p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Dos fuerzas, un mismo dibujo</h2>
+      <div class="flow">
+        <span class="flow-item">Todo</span>
+        <span class="flow-item">contiene</span>
+        <span class="flow-item">Parte</span>
+      </div>
+      <p><strong>Agregación:</strong> la parte existe por su cuenta, puede compartirse y sobrevive al todo.</p>
+      <p><strong>Composición:</strong> el todo crea la parte, es su único dueño y la destruye al desaparecer.</p>
+      <div class="callout callout--success">
+        <p>Los ciclos de vida son independientes en la agregación y están anidados en la composición.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Comparación</p>
+      <h2>Agregación vs. composición</h2>
+      <table>
+        <thead>
+          <tr><th>Criterio</th><th>Agregación ◇</th><th>Composición ◆</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fuerza</td><td>Débil</td><td>Fuerte</td></tr>
+          <tr><td>Crea la parte</td><td>Agente externo</td><td>El todo</td></tr>
+          <tr><td>¿Sobrevive al todo?</td><td>Sí</td><td>No</td></tr>
+          <tr><td>¿Se comparte?</td><td>Sí</td><td>No</td></tr>
+          <tr><td>Ejemplo</td><td>Equipo–Personaje</td><td>Inventario–Item</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Modelo UML</p>
+      <h2>El rombo toca al todo</h2>
+      <pre><code>COMPOSICIÓN (fuerte)          AGREGACIÓN (débil)
+
+Inventario ◆────── Item       Equipo ◇────── Personaje
+  crea y posee     muere        referencia     sobrevive
+  sus ítems        con el todo  partes         al todo</code></pre>
+      <p><strong>Rombo relleno ◆</strong> = composición.</p>
+      <p><strong>Rombo hueco ◇</strong> = agregación.</p>
+      <div class="callout callout--warning">
+        <p>Si el rombo queda en el extremo de la parte, el diagrama afirma lo contrario de lo que quieres modelar.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · composición</p>
+      <h2>El inventario crea sus ítems</h2>
+      <pre><code>class Inventario:
+    def __init__(self, dueno: str, capacidad: int = 6) -&gt; None:
+        self.dueno = dueno
+        self.capacidad = capacidad
+        self._items: list[Item] = []
+
+    def crear_item(self, nombre: str, tipo: str, valor: int) -&gt; None:
+        if len(self._items) &gt;= self.capacidad:
+            raise ValueError("Inventario lleno.")
+        if self.obtener(nombre) is not None:
+            raise ValueError("Ítem duplicado.")
+        self._items.append(Item(nombre, tipo, valor))</code></pre>
+      <p>El ítem nace <strong>dentro</strong> del dueño. No llega desde fuera.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · ciclo de vida</p>
+      <h2>Consumir es dejar morir</h2>
+      <pre><code>def consumir(self, nombre: str) -&gt; str:
+    item = self.obtener(nombre)
+    if item is None:
+        raise ValueError("No existe ese ítem.")
+    self._items.remove(item)
+    return f"Se consumió {item.nombre}."
+
+# Al quitar la última referencia, el objeto
+# queda disponible para la recolección de basura.
+
+del inventario
+# Los ítems que solo estaban en su lista
+# desaparecen con él.</code></pre>
+      <div class="callout callout--error">
+        <p>Si guardas una referencia externa al ítem, ya no muere con el inventario: rompiste la composición.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · agregación</p>
+      <h2>El equipo recibe lo que ya existe</h2>
+      <pre><code>class Equipo:
+    def __init__(self, nombre: str, maximo: int = 3) -&gt; None:
+        self.nombre = nombre
+        self.maximo = maximo
+        self._integrantes: list[Personaje] = []
+
+    def reclutar(self, personaje: Personaje) -&gt; None:
+        if personaje in self._integrantes:
+            raise ValueError("Ya está en el equipo.")
+        if len(self._integrantes) &gt;= self.maximo:
+            raise ValueError("Sin cupos.")
+        self._integrantes.append(personaje)</code></pre>
+      <p>No crea al personaje y tampoco lo destruye al retirarlo.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Demo</p>
+      <h2>Qué sobrevive al borrado</h2>
+      <pre><code>inventario = Inventario("Kael")
+inventario.crear_item("Espada", "arma", 120)
+inventario.crear_item("Poción", "consumible", 40)
+print(Item.vivos)        # 2
+del inventario
+print(Item.vivos)        # 0  ← composición
+
+kael = Personaje("Kael", "Mago", 7)
+equipo = Equipo("Los Cometas")
+equipo.reclutar(kael)
+del equipo
+print(kael.estado())     # Kael sigue aquí ← agregación</code></pre>
+      <div class="callout callout--info">
+        <p>El contador se apoya en <code>weakref.finalize</code>: observa el ciclo de vida, no lo impone.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Decisión</p>
+      <h2>¿Cuál elegir?</h2>
+      <ul>
+        <li><strong>Composición</strong> si la parte no tiene identidad fuera del todo.</li>
+        <li><strong>Agregación</strong> si la parte se comparte o trasciende al contenedor.</li>
+        <li>Si dudas, pregunta qué debe sobrevivir al borrado.</li>
+        <li>Una parte compartida por dos dueños ya no es composición.</li>
+        <li>El modelo puede cambiar: empieza por el ciclo de vida más probable.</li>
+      </ul>
+      <div class="callout callout--reto">
+        <p>Una <code>Mochila</code> puede componer pociones y agregar una espada legendaria que existe en el mundo. Ambas relaciones en la misma clase son válidas.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores de ownership</p>
+      <h2>Cuando el dueño no está claro</h2>
+      <ul>
+        <li>Agregar el mismo ítem a dos inventarios.</li>
+        <li>Devolver el objeto interno y que el llamador lo guarde.</li>
+        <li>Confundir los rombos en UML.</li>
+        <li>Usar <code>__del__</code> para reglas de negocio.</li>
+        <li>Tratar una agregación como composición y destruir lo que no era tuyo.</li>
+        <li>No validar pertenencia antes de reclutar.</li>
+      </ul>
+      <div class="callout callout--warning">
+        <p>Python no impone el ownership: lo sostiene tu diseño. Listas privadas y métodos de dominio son la defensa.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>La mochila del héroe</h2>
+      <p>Crea <code>Mochila</code> con capacidad 5 y dos tipos de contenido:</p>
+      <ul>
+        <li><strong>Composición:</strong> pociones y consumibles que la mochila crea y destruye.</li>
+        <li><strong>Agregación:</strong> armas únicas que existen en el mundo y se pueden prestar.</li>
+        <li>Validaciones de capacidad y duplicados.</li>
+        <li>Demo: borra la mochila y muestra qué sobrevive.</li>
+      </ul>
+      <p>Incluye el diagrama UML con ambos rombos.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Tres ideas para llevarte</h2>
+      <ul>
+        <li><strong>Agregación</strong> presta: la parte vive fuera del todo.</li>
+        <li><strong>Composición</strong> posee: la parte nace y muere con el todo.</li>
+        <li>El ownership se decide por el <strong>ciclo de vida</strong>, no por la comodidad.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>La semana 08 continúa con herencia: reutilizar y especializar clases con <code>super()</code> y sobrescritura.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 06 — Relaciones entre clases</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 06 · Unidad 2</p>
+      <h1>Relaciones entre clases</h1>
+      <p class="subtitle">Asociación, dependencia, multiplicidad y UML</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Distinguir <strong>asociación</strong> de <strong>dependencia</strong>.</li>
+        <li>Leer multiplicidades 1:1, 1:N y N:M en UML.</li>
+        <li>Implementar relaciones con referencias y listas.</li>
+        <li>Mantener coherentes los dos lados de una relación.</li>
+        <li>Modelar un equipo de RPG con reglas reales.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Motivación</p>
+      <h2>Una clase sola no cuenta historias</h2>
+      <div class="flow">
+        <span class="flow-item">Personaje</span>
+        <span class="flow-item">Jugador</span>
+        <span class="flow-item">Equipo</span>
+        <span class="flow-item">Partida</span>
+      </div>
+      <p>Un RPG necesita saber <strong>quién</strong> controla a <strong>qué</strong> personaje y <strong>en qué</strong> equipo juega.</p>
+      <p>En banca: un cliente tiene cuentas; una cuenta registra transacciones.</p>
+      <div class="callout callout--info">
+        <p>Guardar <code>"equipo": "Los Cometas"</code> como texto no permite validar cupos ni contar integrantes.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Asociación vs. dependencia</h2>
+      <div class="comparison">
+        <div>
+          <h3>Dependencia</h3>
+          <p>Uso temporal dentro de un método.</p>
+          <pre><code>def calcular_dano(a, b):
+    return a.nivel - b.nivel</code></pre>
+          <p>No se guarda: termina el método y se olvida.</p>
+        </div>
+        <div>
+          <h3>Asociación</h3>
+          <p>Vínculo estable guardado en un atributo.</p>
+          <pre><code>class Jugador:
+    def __init__(self, pj):
+        self.personaje = pj</code></pre>
+          <p>Sobrevive al método: se puede navegar después.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Multiplicidad</p>
+      <h2>¿Cuántos participan?</h2>
+      <table>
+        <thead>
+          <tr><th>Tipo</th><th>Ejemplo</th><th>Implementación</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1:1</td><td>Jugador ↔ Personaje</td><td>atributo <code>personaje</code></td></tr>
+          <tr><td>1:N</td><td>Equipo → Jugadores</td><td><code>list[Jugador]</code></td></tr>
+          <tr><td>N:M</td><td>Jugadores ↔ Partidas</td><td>lista en cada lado</td></tr>
+          <tr><td>0..1</td><td>Jugador → Equipo</td><td><code>Equipo | None</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout--warning">
+        <p>La cardinalidad se escribe junto al extremo contrario. Léela en voz alta: «un equipo tiene muchos jugadores».</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Navegabilidad</p>
+      <h2>¿Desde dónde puedo llegar?</h2>
+      <div class="flow">
+        <span class="flow-item">Jugador</span>
+        <span class="flow-item">→ personaje</span>
+        <span class="flow-item">→ equipo</span>
+      </div>
+      <p><strong>Unidireccional:</strong> solo existe <code>jugador.personaje</code>.</p>
+      <p><strong>Bidireccional:</strong> además existe <code>equipo.jugadores</code>.</p>
+      <div class="callout callout--success">
+        <p>Haz navegable solo lo que usas. Cada dirección extra es información que debes mantener sincronizada.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 1:1</p>
+      <h2>El jugador tiene un personaje</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, nivel: int = 1) -&gt; None:
+        self.nombre = nombre
+        self.nivel = nivel
+
+class Jugador:
+    def __init__(self, alias: str, personaje: Personaje) -&gt; None:
+        self.alias = alias
+        self.personaje = personaje  # asociación 1:1
+
+ana = Jugador("Ana", Personaje("Kael", 7))
+ana.personaje.subir_nivel()
+print(ana.personaje.nivel)  # 8</code></pre>
+      <p>Se guarda el <strong>objeto</strong>, no una copia del nombre.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 1:N</p>
+      <h2>El equipo agrupa jugadores</h2>
+      <pre><code>class Equipo:
+    def __init__(self, nombre: str, maximo: int = 3) -&gt; None:
+        self.nombre = nombre
+        self.maximo = maximo
+        self._jugadores: list[Jugador] = []
+
+    def agregar(self, jugador: Jugador) -&gt; None:
+        if len(self._jugadores) &gt;= self.maximo:
+            raise ValueError("Equipo lleno.")
+        if jugador in self._jugadores:
+            raise ValueError("Ya está en el equipo.")
+        self._jugadores.append(jugador)
+        jugador.equipo = self  # lado inverso</code></pre>
+      <p>La lista es privada: nadie la muta por fuera.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · coherencia</p>
+      <h2>Retirar sin dejar cabos sueltos</h2>
+      <pre><code>def retirar(self, alias: str) -&gt; Jugador:
+    for jugador in self._jugadores:
+        if jugador.alias == alias:
+            self._jugadores.remove(jugador)
+            jugador.equipo = None   # limpiar ambos lados
+            return jugador
+    raise ValueError("No existe ese jugador.")
+
+@property
+def jugadores(self) -&gt; tuple[Jugador, ...]:
+    return tuple(self._jugadores)  # vista de solo lectura</code></pre>
+      <div class="callout callout--error">
+        <p>Mutarla desde fuera deja <code>jugador.equipo</code> apuntando a un equipo que ya no lo contiene.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · N:M</p>
+      <h2>Jugadores y partidas</h2>
+      <pre><code>class Partida:
+    def __init__(self, nombre: str) -&gt; None:
+        self.nombre = nombre
+        self.jugadores: list[Jugador] = []
+
+    def inscribir(self, jugador: Jugador) -&gt; None:
+        if jugador in self.jugadores:
+            raise ValueError("Ya inscrito.")
+        self.jugadores.append(jugador)
+        jugador.partidas.append(self)</code></pre>
+      <p>Cada jugador acumula su historial; cada partida, su plantilla.</p>
+      <div class="callout callout--info">
+        <p>En una base de datos esto sería una tabla puente. Aquí son dos listas que se actualizan juntas.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Modelo</p>
+      <h2>UML con cardinalidades</h2>
+      <pre><code>      1              1            1           0..*          1
+Jugador ─────────── Personaje    Equipo ─────────────── Jugador
+   │          tiene un pj        agrupa 1..3        │
+   │                                                │
+   │ 0..*                                 pertenece │
+   └────────────── Partida ─────────────────────────┘
+             *                      *</code></pre>
+      <p>Un jugador tiene <strong>exactamente un</strong> personaje y <strong>como máximo un</strong> equipo.</p>
+      <p>Jugadores y partidas se relacionan en <strong>N:M</strong>.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que rompe el modelo</h2>
+      <ul>
+        <li>Guardar el <strong>nombre</strong> del equipo en vez del objeto.</li>
+        <li>Exponer la lista interna y saltarse las validaciones.</li>
+        <li>Actualizar un solo lado de la relación.</li>
+        <li>Permitir duplicados o ignorar el cupo máximo.</li>
+        <li>Declarar como atributo algo que solo era una dependencia.</li>
+        <li>Validar con <code>assert</code>: se desactiva con <code>python -O</code>.</li>
+      </ul>
+      <div class="callout callout--reto">
+        <p>Revisa tu código: si puedes hacer <code>equipo._jugadores.append(x)</code>, aún no está encapsulado.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>La liga del reino</h2>
+      <p>Modela un RPG con <strong>Jugador</strong>, <strong>Personaje</strong>, <strong>Equipo</strong> y <strong>Partida</strong>.</p>
+      <ul>
+        <li>1:1 entre jugador y personaje.</li>
+        <li>1:N entre equipo y jugadores, con cupo de 4.</li>
+        <li>N:M entre jugadores y partidas.</li>
+        <li>Reglas: equipo único, sin duplicados, sin inscribirse dos veces.</li>
+        <li>Demo que muestre plantilla, retiro y error por cupo.</li>
+      </ul>
+      <p>Entrega el diagrama UML con cardinalidades antes del código.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Tres ideas para llevarte</h2>
+      <ul>
+        <li><strong>Asociación</strong> = atributo con referencia; <strong>dependencia</strong> = uso pasajero.</li>
+        <li><strong>Multiplicidad</strong> dice cuántos; <strong>navegabilidad</strong> dice desde dónde.</li>
+        <li>La coherencia se centraliza en métodos: <code>agregar</code>, <code>retirar</code>, <code>inscribir</code>.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>La semana 07 separa las relaciones todo-parte: agregación frente a composición y ciclos de vida.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

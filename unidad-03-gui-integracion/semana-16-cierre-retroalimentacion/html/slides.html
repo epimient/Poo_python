@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 16 — Retroalimentación y cierre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 16 · Unidad 3</p>
+      <h1>Retroalimentación y cierre</h1>
+      <p class="subtitle">Revisar, sustentar y publicar lo que construiste</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Aplicar una checklist de calidad a tu proyecto y al de un compañero.</li>
+        <li>Dar y recibir code review con comentarios accionables.</li>
+        <li>Sustentar un proyecto sin leer el código línea por línea.</li>
+        <li>Publicar un portafolio legible en GitHub.</li>
+        <li>Autoevaluarte con la rúbrica y elegir tu siguiente paso.</li>
+      </ul>
+      <div class="callout callout--info">
+        <p>El curso cierra con evidencia: proyecto ejecutable, revisión de pares y sustentación.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>La checklist de calidad</h2>
+      <table>
+        <thead>
+          <tr><th>Dimensión</th><th>Pregunta de control</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Nombres</td><td>¿Se entiende qué guarda o qué hace?</td></tr>
+          <tr><td>Encapsulamiento</td><td>¿Los datos se modifican por métodos públicos?</td></tr>
+          <tr><td>Responsabilidad única</td><td>¿Cada clase tiene un motivo para cambiar?</td></tr>
+          <tr><td>Validaciones</td><td>¿Se rechazan datos imposibles?</td></tr>
+          <tr><td>Separación de capas</td><td>¿La interfaz no contiene reglas de negocio?</td></tr>
+          <tr><td>Manejo de errores</td><td>¿Los fallos se explican sin <code>except: pass</code>?</td></tr>
+          <tr><td>README</td><td>¿Se puede ejecutar en cinco minutos?</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout--success">
+        <p>Si una casilla no se puede marcar con evidencia, no está resuelta.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Code review</p>
+      <h2>Revisar el código, no a la persona</h2>
+      <div class="comparison">
+        <div>
+          <p><strong>No ayuda</strong></p>
+          <p>«Mal.»</p>
+          <p>«Falta validar.»</p>
+          <p>«Usa nombres claros.»</p>
+        </div>
+        <div>
+          <p><strong>Abre conversación</strong></p>
+          <p>«<code>procesar_todo</code> hace tres cosas; ¿lo dividimos?»</p>
+          <p>«Si <code>precio</code> llega negativo, el total baja. ¿Validamos?»</p>
+          <p>«<code>x</code> parece la cantidad de pociones; ¿la renombramos?»</p>
+        </div>
+      </div>
+      <p>Orden de revisión: ejecución → diseño → casos límite → estilo.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 1 de 4</p>
+      <h2>Un hallazgo es un objeto</h2>
+      <pre><code>class Hallazgo:
+    """Un problema detectado en una línea del código."""
+
+    __slots__ = ("regla", "linea", "detalle", "severidad")
+
+    def __init__(self, regla: str, linea: int, detalle: str,
+                 severidad: str = "media") -&gt; None:
+        if severidad not in SEVERIDADES:
+            raise ValueError(f"Severidad no válida: {severidad}")
+        self.regla = regla
+        self.linea = linea
+        self.detalle = detalle
+        self.severidad = severidad</code></pre>
+      <div class="callout callout--info">
+        <p>Validar en el constructor evita que un dato inválido llegue al informe.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 2 de 4</p>
+      <h2>Una regla, una responsabilidad</h2>
+      <pre><code>class Regla:
+    nombre = "Regla genérica"
+    severidad = "media"
+
+    def revisar(self, arbol: ast.AST) -&gt; list[Hallazgo]:
+        raise NotImplementedError("Implementa revisar()")
+
+    def _crear(self, nodo: ast.AST, detalle: str) -&gt; Hallazgo:
+        return Hallazgo(self.nombre, nodo.lineno, detalle, self.severidad)
+
+
+class DocstringDeClase(Regla):
+    nombre = "Docstring de clase"
+
+    def revisar(self, arbol: ast.AST) -&gt; list[Hallazgo]:
+        hallazgos = []
+        for nodo in ast.walk(arbol):
+            if isinstance(nodo, ast.ClassDef) and not ast.get_docstring(nodo):
+                hallazgos.append(
+                    self._crear(nodo, f"la clase '{nodo.name}' no tiene docstring")
+                )
+        return hallazgos</code></pre>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 3 de 4</p>
+      <h2>Revisor e informe</h2>
+      <pre><code>class Revisor:
+    def __init__(self, reglas: Iterable[Regla] | None = None) -&gt; None:
+        self._reglas = list(reglas) if reglas is not None else []
+
+    def analizar(self, codigo: str) -&gt; Informe:
+        arbol = ast.parse(codigo)
+        hallazgos = []
+        for regla in self._reglas:
+            hallazgos.extend(regla.revisar(arbol))
+        return Informe(hallazgos, len(self._reglas))
+
+
+class Informe:
+    @property
+    def veredicto(self) -&gt; str:
+        if self.por_severidad["alta"] &gt; 0:
+            return "Requiere ajustes antes de entregar"
+        if self.total &gt; 0:
+            return "Aprobado con observaciones menores"
+        return "Sin hallazgos: listo para revisión de pares"</code></pre>
+      <p>El revisor calcula; el informe presenta. Separar ambos facilita probar cada parte.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 4 de 4</p>
+      <h2>Salida legible</h2>
+      <pre><code> Fuente          : fragmento con problemas · inventario.py
+ Reglas aplicadas: 5
+ Hallazgos       : 10
+----------------------------------------------------------------
+ L  3  [ALTA  ] Encapsulamiento: atributo público 'self.duenio'
+ L  4  [ALTA  ] Encapsulamiento: atributo público 'self.objetos'
+ L  7  [ALTA  ] print en lógica: 'print' dentro de 'agregar'
+ L 10  [MEDIA ] Método largo: 'procesar_todo' ocupa 18 líneas
+----------------------------------------------------------------
+ Alta: 3   Media: 2   Baja: 5
+ Veredicto: Requiere ajustes antes de entregar</code></pre>
+      <div class="callout callout--warning">
+        <p>Un informe sin severidades ni veredicto obliga a interpretar; la herramienta debe concluir.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Sustentación y portafolio</p>
+      <h2>Ocho minutos, cinco bloques</h2>
+      <div class="flow">
+        <span class="flow-item">Problema 1 min</span>
+        <span class="flow-item">Demo 3 min</span>
+        <span class="flow-item">Arquitectura 1,5 min</span>
+        <span class="flow-item">Decisiones 1,5 min</span>
+        <span class="flow-item">Aprendizajes 1 min</span>
+      </div>
+      <ul>
+        <li>Explica el porqué de tus decisiones; el cómo ya está en el repositorio.</li>
+        <li>Ten una demo grabada como plan B.</li>
+        <li>Portafolio: tres proyectos terminados, README ejecutable y sin secretos.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que resta puntos al cierre</h2>
+      <ul>
+        <li><strong>Revisar solo el estilo</strong> antes que las validaciones ausentes.</li>
+        <li><strong>Reescribir el código ajeno:</strong> el autor no aprende y el historial miente.</li>
+        <li><strong>Leer código en la sustentación:</strong> el jurado evalúa el diseño.</li>
+        <li><strong>README que no permite ejecutar:</strong> sin comandos ni datos de ejemplo.</li>
+        <li><strong>Autoevaluarse sin evidencia:</strong> «creo que merezco 5» no es un argumento.</li>
+        <li><strong>Subir secretos:</strong> borrar el archivo no borra el commit.</li>
+      </ul>
+      <div class="callout callout--error">
+        <p>Antes de entregar: ejecuta desde cero siguiendo tu propio README.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>Revisión de pares</h2>
+      <p>Intercambia tu proyecto con un compañero y revisen con la checklist.</p>
+      <ul>
+        <li>Cinco comentarios accionables: línea, problema y propuesta.</li>
+        <li>Al menos un caso límite sin manejar (vida negativa, cantidad cero, lista vacía).</li>
+        <li>Veredicto escrito: ¿se entrega o requiere ajustes?</li>
+      </ul>
+      <div class="callout callout--reto">
+        <p>No corrijas el código ajeno. Señala, propone y deja que el autor decida.</p>
+      </div>
+      <p><strong>Entregable:</strong> revisión recibida, cambios aplicados y sección «Próximos pasos» en tu README.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Qué te llevas</h2>
+      <ul>
+        <li>Una checklist que convierte «está bien» en evidencia verificable.</li>
+        <li>Code review que mejora el diseño sin quitar autoría.</li>
+        <li>Una sustentación que explica decisiones, no líneas.</li>
+        <li>Un portafolio con tres proyectos defendibles.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Siguiente paso: elige una ruta, define tres tareas y termina un proyecto pequeño en dos semanas.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 12</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

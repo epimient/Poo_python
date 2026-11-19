@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 02 — Metodologías y paradigmas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 02 · Unidad 1</p>
+      <h1>Metodologías y paradigmas</h1>
+      <p class="subtitle">Pensar el problema antes de escribir la solución</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Distinguir los paradigmas procedural, funcional y orientado a objetos.</li>
+        <li>Resolver el mismo combate con funciones y con clases.</li>
+        <li>Leer y dibujar un UML básico con relaciones y cardinalidades.</li>
+        <li>Explicar el ciclo de desarrollo y una práctica ágil.</li>
+        <li>Usar Git como herramienta de trabajo y entender la evaluación del curso.</li>
+      </ul>
+      <div class="callout callout--info">
+        <p>Un paradigma organiza el código; una metodología organiza el trabajo. Esta semana conecta ambas cosas.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Tres formas de mirar el mismo problema</h2>
+      <table>
+        <tr><th>Paradigma</th><th>Pregunta central</th><th>Unidad</th><th>Ejemplo</th></tr>
+        <tr><td>Imperativo / procedural</td><td>¿Qué pasos debo ejecutar?</td><td>Función</td><td><code>calcular_dano()</code></td></tr>
+        <tr><td>Funcional</td><td>¿Qué transformación aplico?</td><td>Función pura</td><td><code>filter()</code>, comprensión</td></tr>
+        <tr><td>Orientado a objetos</td><td>¿Qué entidades existen y qué saben hacer?</td><td>Objeto / clase</td><td><code>kaede.atacar(rook)</code></td></tr>
+      </table>
+      <p>Python permite mezclarlos. La elección depende de la forma del problema, no de una moda.</p>
+      <div class="callout callout--warning">
+        <p>Crear una clase para cada cálculo no es POO: es burocracia. Una función sigue siendo la mejor opción para una operación sin estado.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · procedural</p>
+      <h2>Funciones y diccionarios</h2>
+      <pre><code>def crear_personaje(nombre: str, hp: int, ataque: int) -&gt; dict[str, object]:
+    return {"nombre": nombre, "hp": hp, "ataque": ataque}
+
+
+def atacar(atacante: dict[str, object], objetivo: dict[str, object]) -&gt; None:
+    dano = int(atacante["ataque"])
+    objetivo["hp"] = max(0, int(objetivo["hp"]) - dano)
+    print(f"{atacante['nombre']} ataca a {objetivo['nombre']}.")
+
+
+kaede = crear_personaje("Kaede", 120, 18)
+rook = crear_personaje("Rook", 90, 24)
+atacar(kaede, rook)</code></pre>
+      <p><strong>Ventaja:</strong> directo y fácil de probar. <strong>Límite:</strong> cualquier función puede modificar cualquier clave; las reglas quedan dispersas.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · POO</p>
+      <h2>Una clase con estado y comportamiento</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, hp: int, ataque: int) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+        self.ataque = ataque
+
+    def atacar(self, objetivo: "Personaje") -&gt; None:
+        dano = self.ataque
+        objetivo.hp = max(0, objetivo.hp - dano)
+        print(f"{self.nombre} ataca a {objetivo.nombre}.")
+
+
+kaede = Personaje("Kaede", 120, 18)
+rook = Personaje("Rook", 90, 24)
+kaede.atacar(rook)</code></pre>
+      <p>El ataque pertenece al personaje y la vida del objetivo es un atributo con nombre. La llamada se lee como la regla del juego.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Comparación</p>
+      <h2>Qué cambia y qué no</h2>
+      <table>
+        <tr><th>Aspecto</th><th>Procedural</th><th>POO</th></tr>
+        <tr><td>Datos</td><td>Diccionarios y variables sueltas</td><td>Atributos del objeto</td></tr>
+        <tr><td>Comportamiento</td><td>Funciones externas</td><td>Métodos del objeto</td></tr>
+        <tr><td>Validación</td><td>Repetida en cada función</td><td>Concentrada en el constructor</td></tr>
+        <tr><td>Cambio típico</td><td>Más <code>if</code> en varios lugares</td><td>Nuevo método o subclase</td></tr>
+        <tr><td>Riesgo</td><td>Estado global difícil de rastrear</td><td>Abstracción innecesaria</td></tr>
+      </table>
+      <div class="callout callout--success">
+        <p>Las dos versiones del ejemplo terminan con el mismo estado. El paradigma cambia la organización, no la aritmética.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Modelado</p>
+      <h2>UML: dibujar antes de codificar</h2>
+      <pre><code>┌─────────────────────────────┐
+│          Personaje          │
+├─────────────────────────────┤
+│ - nombre: str               │
+│ - hp: int                   │
+│ - ataque: int               │
+├─────────────────────────────┤
+│ + presentarse(): str        │
+│ + atacar(objetivo): None    │
+│ + esta_vivo(): bool         │
+└─────────────────────────────┘</code></pre>
+      <ul>
+        <li><code>+</code> público, <code>-</code> privado, <code>#</code> protegido.</li>
+        <li>Asociación: línea simple entre clases que colaboran.</li>
+        <li>Herencia: flecha con triángulo hueco hacia la clase base.</li>
+        <li>Composición: rombo relleno en el extremo del todo.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Modelado</p>
+      <h2>UML de un RPG sencillo</h2>
+      <pre><code>┌──────────────────┐        ┌──────────────────┐
+│    Personaje     │ 1  0..*│       Arma       │
+├──────────────────┤────────├──────────────────┤
+│ - nombre: str    │        │ - nombre: str    │
+│ - hp: int        │        │ - dano: int      │
+├──────────────────┤        ├──────────────────┤
+│ + atacar(): None │        │ + calcular(): int│
+└────────┬─────────┘        └──────────────────┘
+         │ 1
+         │ contiene
+         ▼ 1..*
+┌──────────────────┐
+│      Equipo      │
+├──────────────────┤
+│ - miembros: list │
+├──────────────────┤
+│ + agregar(): None│
+└──────────────────┘</code></pre>
+      <p>El diagrama responde: qué clases hay, qué guardan, quién conoce a quién y qué operaciones son públicas.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Proceso</p>
+      <h2>Ciclo de desarrollo de software</h2>
+      <div class="flow">
+        <span class="flow-item">1. Análisis</span>
+        <span class="flow-item">2. Diseño</span>
+        <span class="flow-item">3. Implementación</span>
+        <span class="flow-item">4. Pruebas</span>
+        <span class="flow-item">5. Despliegue</span>
+        <span class="flow-item">6. Mantenimiento</span>
+      </div>
+      <p>El modelo en <strong>cascada</strong> avanza fase por fase y asume requisitos estables. En la práctica los requisitos cambian: aparece una regla, el docente pide otra validación, el equipo descubre que el alcance era enorme.</p>
+      <div class="callout callout--info">
+        <p>Las metodologías <strong>iterativas</strong> construyen una versión pequeña, la revisan y mejoran en el siguiente ciclo. Entregar valor pronto reduce el riesgo.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Proceso</p>
+      <h2>Ágil, Git y evidencia</h2>
+      <div class="comparison">
+        <div>
+          <h3>Prácticas ágiles</h3>
+          <ul>
+            <li>Backlog priorizado.</li>
+            <li>Iteraciones cortas con demo.</li>
+            <li>Revisión y retrospectiva.</li>
+            <li>Ajuste con evidencia.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Flujo Git</h3>
+          <ul>
+            <li>Una rama por funcionalidad.</li>
+            <li>Commits pequeños e imperativos.</li>
+            <li><code>main</code> siempre ejecuta.</li>
+            <li>Integrar solo lo probado.</li>
+          </ul>
+        </div>
+      </div>
+      <pre><code>git switch -c feature/menu-combate
+# trabajar y probar
+git add menu.py
+git commit -m "Agrega menú de selección de personaje"
+git switch main
+git merge feature/menu-combate</code></pre>
+      <p>Git no es solo para entregar: es la memoria y el respaldo del proceso.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Evaluación</p>
+      <h2>Tres proyectos, sin exámenes</h2>
+      <table>
+        <tr><th>Proyecto</th><th>Semana</th><th>Modalidad</th><th>Peso</th><th>Producto</th></tr>
+        <tr><td>P1</td><td>5</td><td>Individual</td><td>25 %</td><td>Creador de personajes RPG</td></tr>
+        <tr><td>P2</td><td>11</td><td>Equipos 2–3</td><td>30 %</td><td>Arcade de combate por turnos</td></tr>
+        <tr><td>P3</td><td>15</td><td>Equipos 2–3</td><td>45 %</td><td>Arcade con interfaz gráfica</td></tr>
+      </table>
+      <div class="callout callout--warning">
+        <p>Proyecto que no ejecuta: máximo 3.0. Copia: 0. Sustentación obligatoria por integrante. No dejes la integración para el último fin de semana.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que conviene evitar</h2>
+      <table>
+        <tr><th>Error</th><th>Qué revela</th><th>Corrección</th></tr>
+        <tr><td>Clase para cada cosa</td><td>Abstracción innecesaria</td><td>Usa funciones si no hay estado propio</td></tr>
+        <tr><td>Diccionarios disfrazados de POO</td><td>Datos sin comportamiento</td><td>Pregunta qué operaciones pertenecen a la entidad</td></tr>
+        <tr><td>UML con cada detalle</td><td>Exceso de modelado</td><td>Comunica solo lo necesario</td></tr>
+        <tr><td><code>git add .</code> sin revisar</td><td>Entran archivos temporales</td><td>Revisa <code>git status</code> y usa <code>.gitignore</code></td></tr>
+        <tr><td>Confundir ágil con improvisar</td><td>Sin plan ni prioridades</td><td>Backlog y revisión semanal</td></tr>
+      </table>
+      <div class="callout callout--error">
+        <p>No compares paradigmas contando líneas. Compara cohesión, legibilidad y facilidad para cambiar una regla.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>De la teoría a tu repositorio</h2>
+      <p><strong>Nivel 1.</strong> Refactoriza el código procedural a una clase <code>Personaje</code> con validaciones en el constructor.</p>
+      <p><strong>Nivel 2.</strong> Diseña el UML de un RPG con cinco clases, cardinalidades y una composición justificada.</p>
+      <p><strong>Nivel 3.</strong> Arma el plan de trabajo de un equipo: alcance, roles, backlog, tres iteraciones, riesgos y flujo Git.</p>
+      <pre><code>refactor_poo.py
+uml_rpg.md
+plan_equipo.md
+
+git switch -c feature/refactor
+git commit -m "Convierte el combate procedural a POO"</code></pre>
+      <div class="callout callout--reto">
+        <p><strong>Reto:</strong> publica el plan como tablero en GitHub y actualízalo al final de cada iteración.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Lo que te llevas</h2>
+      <ul>
+        <li><strong>Paradigma:</strong> forma de organizar el pensamiento y el código.</li>
+        <li><strong>Procedural:</strong> funciones y pasos; útil para cálculos y scripts.</li>
+        <li><strong>Funcional:</strong> transformaciones sin estado mutable; apoyo en Python.</li>
+        <li><strong>POO:</strong> entidades con datos y comportamiento; útil cuando hay reglas y relaciones.</li>
+        <li><strong>UML:</strong> vocabulario para discutir el diseño antes de codificar.</li>
+        <li><strong>Ágil + Git:</strong> incrementos cortos, evidencia y versiones recuperables.</li>
+        <li><strong>Evaluación:</strong> P1 25 %, P2 30 %, P3 45 %; se sustenta.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Próxima semana: clases, objetos y atributos. Trae tu diagrama y el repositorio limpio.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

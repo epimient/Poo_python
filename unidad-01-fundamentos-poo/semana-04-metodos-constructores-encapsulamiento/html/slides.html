@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 04 — Métodos, constructores y encapsulamiento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 04 · Unidad 1</p>
+      <h1>Métodos, constructores y encapsulamiento</h1>
+      <p class="subtitle">Que tus objetos sepan defenderse de los datos inválidos</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Escribir métodos de instancia que modifican el estado.</li>
+        <li>Usar valores por defecto y fábricas con <code>@classmethod</code>.</li>
+        <li>Aplicar <code>@staticmethod</code> y distinguirlo de los otros métodos.</li>
+        <li>Proteger atributos con <code>_</code>, <code>__</code> y <code>@property</code>.</li>
+        <li>Validar con setters y lanzar <code>ValueError</code>.</li>
+        <li>Definir <code>__str__</code> y <code>__repr__</code>.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">El problema</p>
+      <h2>Datos sin reglas, bugs garantizados</h2>
+      <pre><code>aria = Personaje("Aria", hp=10)
+aria.recibir_danio(50)
+
+print(aria.hp)   # -40  ← estado imposible
+
+cuenta = CuentaBancaria("Ada", 100)
+cuenta.saldo = -1_000_000   # nadie lo impide</code></pre>
+      <div class="callout callout--warning">El error no aparece donde se escribe el dato, sino mucho después y en otro lugar. El encapsulamiento lo detiene en la puerta.</div>
+      <p>Encapsular no es esconder por moda: es garantizar que el objeto cumpla sus reglas.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 1</p>
+      <h2>Métodos de instancia</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, hp: int = 100) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+
+    def saludar(self) -&gt; str:
+        return f"Soy {self.nombre} y tengo {self.hp} hp."
+
+    def recibir_danio(self, cantidad: int) -&gt; int:
+        self.hp = max(0, self.hp - cantidad)
+        return cantidad
+
+aria = Personaje("Aria", 80)
+print(aria.saludar())</code></pre>
+      <p><code>self</code> se enlaza solo: <code>aria.saludar()</code> equivale a <code>Personaje.saludar(aria)</code>.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 2</p>
+      <h2>Constructores con valores por defecto</h2>
+      <pre><code>class Personaje:
+    MAX_HP = 100
+
+    def __init__(self, nombre: str, hp: int = MAX_HP,
+                 ataque: int = 10) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+        self.ataque = ataque
+
+brom = Personaje("Brom")           # 100 hp, ataque 10
+aria = Personaje("Aria", 80, 18)   # 80 hp, ataque 18</code></pre>
+      <div class="callout callout--error">Nunca uses <code>[]</code> o <code>{}</code> como valor por defecto: se comparten entre todas las instancias. Usa <code>None</code> y crea el mutable dentro.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 3</p>
+      <h2><code>@classmethod</code>: una fábrica</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, hp: int, ataque: int) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+        self.ataque = ataque
+
+    @classmethod
+    def desde_ficha(cls, ficha: str) -&gt; "Personaje":
+        nombre, hp, ataque = (p.strip() for p in ficha.split(","))
+        return cls(nombre, int(hp), int(ataque))
+
+brom = Personaje.desde_ficha("Brom, 120, 15")</code></pre>
+      <p>Recibe <code>cls</code> y construye con <code>cls(...)</code>. Si mañana existe una subclase, la fábrica devolverá el tipo correcto.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 4</p>
+      <h2><code>@staticmethod</code>: utilidad sin estado</h2>
+      <pre><code>class Personaje:
+    @staticmethod
+    def calcular_danio(ataque: int, defensa: int) -&gt; int:
+        return max(1, ataque - defensa)
+
+print(Personaje.calcular_danio(18, 4))  # 14
+
+# También se puede llamar desde una instancia
+aria = Personaje()
+print(aria.calcular_danio(10, 2))       # 8</code></pre>
+      <table>
+        <thead><tr><th>Decorador</th><th>Recibe</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>normal</td><td><code>self</code></td><td>atacar, curar</td></tr>
+          <tr><td><code>@classmethod</code></td><td><code>cls</code></td><td>fábricas</td></tr>
+          <tr><td><code>@staticmethod</code></td><td>nada</td><td>cálculos puros</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Encapsulamiento</p>
+      <h2>Protegido, privado y name mangling</h2>
+      <pre><code>class CuentaBancaria:
+    def __init__(self, titular: str, saldo: float) -&gt; None:
+        self.titular = titular      # público
+        self._saldo = saldo         # protegido
+        self.__clave = "0000"       # name mangling
+
+cuenta = CuentaBancaria("Ada", 250.0)
+
+print(cuenta._saldo)                 # 250.0 (no deberías)
+print(cuenta._CuentaBancaria__clave) # "0000"
+# print(cuenta.__clave)              # AttributeError</code></pre>
+      <div class="callout callout--info">El guion bajo es una convención, no un candado. La protección real aparece cuando no hay ninguna vía pública para romper el estado.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código 5</p>
+      <h2><code>@property</code> y setter validado</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, hp_max: int = 100) -&gt; None:
+        self.nombre = nombre
+        self.hp_max = hp_max
+        self._hp = hp_max
+
+    @property
+    def hp(self) -&gt; int:
+        return self._hp
+
+    @hp.setter
+    def hp(self, valor: int) -&gt; None:
+        if not 0 &lt;= valor &lt;= self.hp_max:
+            raise ValueError(f"hp fuera de rango: {valor}")
+        self._hp = valor
+
+aria.hp = 500   # ValueError
+aria.hp = -1    # ValueError</code></pre>
+      <div class="callout callout--error">Dentro del setter usa <code>self._hp = valor</code>. Con <code>self.hp = valor</code> el setter se llama a sí mismo y termina en <code>RecursionError</code>.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejemplo 1</p>
+      <h2>Combate con estado consistente</h2>
+      <pre><code>class Personaje:
+    def atacar(self, objetivo: "Personaje") -&gt; int:
+        if not self.vivo:
+            raise ValueError(f"{self.nombre} está derrotado.")
+        danio = self.calcular_danio(self.ataque, objetivo.defensa)
+        return objetivo.recibir_danio(danio)
+
+    def recibir_danio(self, cantidad: int) -&gt; int:
+        antes = self._hp
+        self.hp = max(0, self._hp - cantidad)
+        return antes - self._hp
+
+    def curar(self, cantidad: int) -&gt; int:
+        antes = self._hp
+        self.hp = min(self.hp_max, self._hp + cantidad)
+        return self._hp - antes</code></pre>
+      <p><code>recibir_danio</code> y <code>curar</code> devuelven el cambio real, no lo que se pidió.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejemplo 2</p>
+      <h2>Cuenta con saldo protegido</h2>
+      <pre><code>class CuentaBancaria:
+    @property
+    def saldo(self) -&gt; float:
+        return self._saldo
+
+    def depositar(self, monto: float) -&gt; float:
+        monto = self._validar_monto(monto)
+        self._saldo = round(self._saldo + monto, 2)
+        self._registrar("Depósito", monto)
+        return monto
+
+    def retirar(self, monto: float) -&gt; float:
+        monto = self._validar_monto(monto)
+        if monto &gt; self._saldo:
+            raise ValueError("Saldo insuficiente.")
+        self._saldo = round(self._saldo - monto, 2)
+        self._registrar("Retiro", -monto)
+        return monto</code></pre>
+      <p>El saldo solo cambia por operaciones válidas. El historial se entrega como tupla para que nadie lo edite.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Representación</p>
+      <h2><code>__str__</code> vs. <code>__repr__</code></h2>
+      <pre><code>def __str__(self) -&gt; str:
+    return f"{self.nombre} ({self._hp}/{self.hp_max} hp)"
+
+def __repr__(self) -&gt; str:
+    return (f"Personaje(nombre={self.nombre!r}, hp={self._hp}, "
+            f"hp_max={self.hp_max})")
+
+print(aria)        # Aria (6/90 hp)
+print(repr(aria))  # Personaje(nombre='Aria', hp=6, hp_max=90)</code></pre>
+      <table>
+        <thead><tr><th></th><th>Para quién</th><th>Objetivo</th></tr></thead>
+        <tbody>
+          <tr><td><code>__str__</code></td><td>Usuario / jugador</td><td>Legible</td></tr>
+          <tr><td><code>__repr__</code></td><td>Quien depura</td><td>Preciso y reconstruible</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Donde se rompe el encapsulamiento</h2>
+      <ul>
+        <li>Recursión: <code>self.hp = valor</code> dentro del setter <code>hp</code>.</li>
+        <li>Validar después de asignar: el objeto ya quedó inválido.</li>
+        <li>Lista o diccionario como valor por defecto del constructor.</li>
+        <li>Devolver un valor desde un setter: se ignora.</li>
+        <li>Creer que <code>__saldo</code> es privado de verdad: se accede con <code>_Clase__saldo</code>.</li>
+        <li><code>__str__</code> que devuelve algo distinto de <code>str</code>.</li>
+      </ul>
+      <div class="callout callout--warning">Un <code>try/except ValueError: pass</code> esconde el error y deja el estado a medias. Captura para informar, no para silenciar.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Reto</p>
+      <h2>Cuenta bancaria con reglas</h2>
+      <p>Amplía la clase <code>CuentaBancaria</code> con estas reglas:</p>
+      <ul>
+        <li>El saldo inicial no puede ser negativo.</li>
+        <li>Depósitos y retiros deben ser mayores que cero.</li>
+        <li>No se puede retirar más de lo disponible.</li>
+        <li>Guarda cada movimiento en una lista interna y expón una copia de solo lectura.</li>
+        <li>Añade <code>__str__</code> y <code>__repr__</code>, y demuestra al menos tres errores capturados.</li>
+      </ul>
+      <div class="callout callout--reto">Reto extra: permite un descubierto de hasta $200 con una propiedad <code>disponible</code>, sin romper la regla del saldo.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Lo que te llevas</h2>
+      <ul>
+        <li>Los métodos convierten el estado en comportamiento.</li>
+        <li>El constructor acepta valores por defecto, nunca mutables compartidos.</li>
+        <li><code>@classmethod</code> fabrica objetos; <code>@staticmethod</code> calcula sin estado.</li>
+        <li><code>_</code> y <code>__</code> son convenciones; <code>@property</code> es la puerta validada.</li>
+        <li><code>ValueError</code> protege las reglas del dominio.</li>
+        <li><code>__str__</code> habla con el usuario; <code>__repr__</code> con quien depura.</li>
+      </ul>
+      <div class="callout callout--success">La próxima semana: creador de personajes RPG. Todo lo de hoy será la base del proyecto P1.</div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / N</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

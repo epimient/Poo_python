@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 10 — Polimorfismo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 10 · Unidad 2</p>
+      <h1>Polimorfismo</h1>
+      <p class="subtitle">Un mismo mensaje, muchas respuestas</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Escribir un bucle de combate que no pregunte tipos.</li>
+        <li>Diseñar contratos con clases abstractas y con <code>Protocol</code>.</li>
+        <li>Integrar tus objetos con <code>len()</code>, <code>for</code>, <code>in</code>, <code>+</code> y <code>str()</code>.</li>
+        <li>Elegir entre herencia, duck typing y <code>singledispatch</code> según el problema.</li>
+        <li>Detectar cadenas de <code>isinstance()</code> y reemplazarlas por diseño polimórfico.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">El problema</p>
+      <h2>El bucle que crece con cada clase</h2>
+      <div class="comparison">
+        <div>
+          <h3>Acoplado</h3>
+          <pre><code>for p in personajes:
+    if isinstance(p, Guerrero):
+        p.golpe_espada()
+    elif isinstance(p, Mago):
+        p.lanzar_hechizo()
+    elif isinstance(p, Arquero):
+        p.disparar()</code></pre>
+        </div>
+        <div>
+          <h3>Polimórfico</h3>
+          <pre><code>for p in personajes:
+    p.atacar(objetivo)
+
+# Agregar un paladín no
+# toca este bucle.</code></pre>
+        </div>
+      </div>
+      <div class="callout callout--warning">
+        <p>Si el cliente necesita preguntar el tipo, todavía no hay polimorfismo: hay un <code>if</code> disfrazado.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Tres piezas del polimorfismo</h2>
+      <div class="flow">
+        <div class="flow-item">1. Contrato común</div>
+        <div class="flow-item">2. Respuestas distintas</div>
+        <div class="flow-item">3. Cliente que solo conoce el contrato</div>
+      </div>
+      <ul>
+        <li><strong>Contrato:</strong> mismo nombre de método y firma compatible.</li>
+        <li><strong>Implementaciones:</strong> cada clase decide su lógica y sus datos.</li>
+        <li><strong>Cliente:</strong> el bucle o <code>Combate</code> no importa las subclases.</li>
+      </ul>
+      <div class="callout callout--info">
+        <p><code>Personaje(ABC)</code> obliga a implementar <code>atacar()</code>. Esa es la garantía mínima del contrato.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · Paso 1</p>
+      <h2>El contrato abstracto</h2>
+      <pre><code>from abc import ABC, abstractmethod
+
+class Personaje(ABC):
+    def __init__(self, nombre: str, hp: int) -> None:
+        self.nombre = nombre
+        self._hp = hp
+
+    @property
+    def vivo(self) -&gt; bool:
+        return self._hp &gt; 0
+
+    def recibir_dano(self, cantidad: int) -&gt; int:
+        real = min(max(cantidad, 0), self._hp)
+        self._hp -= real
+        return real
+
+    @abstractmethod
+    def atacar(self, objetivo: "Personaje") -&gt; str:
+        """Aplica daño y describe la acción."""</code></pre>
+      <p><code>Personaje</code> comparte estado y HP, pero delega la respuesta de ataque.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · Paso 2</p>
+      <h2>Cada especialidad responde distinto</h2>
+      <pre><code>class Guerrero(Personaje):
+    def atacar(self, objetivo: Personaje) -&gt; str:
+        dano = 20 + self.fuerza
+        real = objetivo.recibir_dano(dano)
+        return f"golpe de espada: {real} de daño"
+
+class Mago(Personaje):
+    def atacar(self, objetivo: Personaje) -&gt; str:
+        if self.mana &gt;= 15:
+            self.mana -= 15
+            real = objetivo.recibir_dano(self.poder)
+            return f"bola de fuego: {real} de daño"
+        real = objetivo.recibir_dano(6)
+        return f"golpe de bastón: {real} de daño"</code></pre>
+      <div class="callout callout--info">
+        <p>Misma firma, distinta mecánica. El arquero puede fallar; el mago gasta maná; el guerrero pega fuerte.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · Paso 3</p>
+      <h2>El motor no conoce las subclases</h2>
+      <pre><code>class Combate:
+    def __init__(self, personajes: list[Personaje]) -&gt; None:
+        self.personajes = personajes
+
+    def jugar_turno(self) -&gt; None:
+        for personaje in self.personajes:
+            if not personaje.vivo:
+                continue
+            objetivo = self.elegir_rival(personaje)
+            if objetivo is None:
+                break
+            narracion = personaje.atacar(objetivo)
+            print(f"{personaje.nombre}: {narracion}")</code></pre>
+      <div class="callout callout--success">
+        <p>La única dependencia es <strong>Combate → Personaje</strong>. Agregar una clase nueva no modifica este método.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Demo</p>
+      <h2>Seis turnos, tres respuestas</h2>
+      <pre><code>--- Turno 1 ---
+Brunilda -&gt; Morgana   golpe de espada: 19 de daño   | 71 HP
+Merlín   -&gt; Morgana   bola de fuego: 30 de daño     | 41 HP
+Lyra     -&gt; Morgana   flecha certera: 18 de daño    | 23 HP
+Grom     -&gt; Merlín    golpe de espada: 22 de daño   | 73 HP
+Morgana  -&gt; Merlín    bola de fuego: 27 de daño     | 46 HP
+Sombra   -&gt; Merlín    falla el disparo: 0 de daño   | 46 HP
+
+--- Turno 2 ---
+Brunilda -&gt; Morgana   golpe de espada: 23 de daño   | 0 HP
+          Morgana ha caído (KO).</code></pre>
+      <p>El mismo <code>atacar()</code> produce golpes, hechizos, flechas y fallos.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Duck typing</p>
+      <h2>Si sabe volar, vuela</h2>
+      <pre><code>class Pajaro:
+    def volar(self) -&gt; str:
+        return "El pájaro bate las alas"
+
+class Avion:
+    def volar(self) -&gt; str:
+        return "El avión enciende los motores"
+
+def despegar(volador) -&gt; None:
+    print(volador.volar())
+
+despegar(Pajaro())
+despegar(Avion())</code></pre>
+      <p>No hay padre común. El contrato es implícito: ambos responden a <code>volar()</code>.</p>
+      <div class="callout callout--warning">
+        <p>Duck typing no significa “todo vale”: si falta el método, obtendrás <code>AttributeError</code>.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Protocol</p>
+      <h2>Documentar el contrato sin heredar</h2>
+      <pre><code>from typing import Protocol
+
+class Volador(Protocol):
+    def volar(self) -&gt; str:
+        ...
+
+def despegar(equipo: list[Volador]) -&gt; None:
+    for volador in equipo:
+        print(volador.volar())
+
+# Pajaro y Avion no heredan de Volador:
+# solo cumplen su forma.</code></pre>
+      <ul>
+        <li><strong>ABC:</strong> contrato explícito y lógica compartida.</li>
+        <li><strong>Protocol:</strong> contrato estructural, sin acoplar la jerarquía.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Dunders</p>
+      <h2>Un inventario que habla Python</h2>
+      <pre><code>class Inventario:
+    def __len__(self) -&gt; int:
+        return len(self._objetos)
+
+    def __iter__(self):
+        return iter(self._objetos)
+
+    def __contains__(self, nombre: object) -&gt; bool:
+        return nombre in self._objetos
+
+    def __add__(self, otro: "Inventario") -&gt; "Inventario":
+        if not isinstance(otro, Inventario):
+            return NotImplemented
+        return Inventario(self._objetos + otro._objetos)
+
+    def __str__(self) -&gt; str:
+        return "Inventario: " + ", ".join(self._objetos)</code></pre>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">singledispatch</p>
+      <h2>Cuando el tipo del dato decide</h2>
+      <pre><code>from functools import singledispatch
+
+@singledispatch
+def aplicar_dano(dano: object, armadura: int = 0) -&gt; int:
+    raise TypeError("Daño no soportado")
+
+@aplicar_dano.register
+def _(dano: DanoFisico, armadura: int = 0) -&gt; int:
+    return max(1, dano.puntos - armadura)
+
+@aplicar_dano.register
+def _(dano: DanoMagico, armadura: int = 0) -&gt; int:
+    return max(1, dano.puntos - armadura // 2)</code></pre>
+      <p>Sin cadenas de <code>isinstance</code>: cada tipo registra su fórmula.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Decisión de diseño</p>
+      <h2><code>isinstance()</code> vs. polimorfismo</h2>
+      <table>
+        <thead>
+          <tr><th>Situación</th><th>Herramienta</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Jerarquía con estado compartido</td><td>Herencia + ABC</td></tr>
+          <tr><td>Contrato ligero sin herencia</td><td>Duck typing / Protocol</td></tr>
+          <tr><td>Sintaxis de contenedor</td><td>Dunders</td></tr>
+          <tr><td>Variantes por tipo de dato</td><td><code>singledispatch</code></td></tr>
+          <tr><td>Validar una entrada externa</td><td><code>isinstance</code> puntual</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout--error">
+        <p>Una cadena de <code>isinstance</code> en el bucle principal es deuda técnica: cada subclase nueva te obliga a editarla.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que rompe el contrato</h2>
+      <ul>
+        <li>Olvidar <code>super().__init__()</code> y dejar el objeto sin HP.</li>
+        <li>Cambiar la firma al sobrescribir: el cliente polimórfico falla.</li>
+        <li>Confundir <code>NotImplemented</code> con <code>NotImplementedError</code>.</li>
+        <li>Usar <code>hasattr()</code> como validación universal del contrato.</li>
+        <li>Imprimir dentro de la lógica y no poder probar el daño.</li>
+      </ul>
+      <div class="callout callout--warning">
+        <p>Prueba el motor con un doble de prueba: un objeto con <code>atacar()</code> que devuelva un texto fijo.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Reto obligatorio</p>
+      <h2>Arcade: duelo por turnos</h2>
+      <p>Elige guerrero, mago o arquero. La máquina elige otro. Combate hasta 0 HP.</p>
+      <ul>
+        <li>Menú con validación y revancha.</li>
+        <li>Guerrero: golpe fuerte con crítico.</li>
+        <li>Mago: hechizo con maná y bastón de respaldo.</li>
+        <li>Arquero: acierto y crítico con <code>random</code>.</li>
+        <li>Bucle polimórfico: lista + <code>atacar()</code>, sin <code>isinstance</code>.</li>
+      </ul>
+      <div class="callout callout--reto">
+        <p>Agrega un paladín que cure antes de golpear. Si el motor cambia, aún queda una decisión de tipo escondida.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>La prueba del diseño</h2>
+      <ul>
+        <li>El cliente envía un mensaje; cada objeto decide cómo responder.</li>
+        <li>ABC da contrato y lógica compartida; Protocol da contrato estructural.</li>
+        <li>Los dunders integran tus clases con la sintaxis del lenguaje.</li>
+        <li><code>singledispatch</code> resuelve variantes por tipo de dato.</li>
+        <li>Si agregas una clase sin tocar el motor, el polimorfismo funciona.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Siguiente paso: resuelve el arcade y prepara el proyecto de la unidad. El motor de combate será la base del P2.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 16</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

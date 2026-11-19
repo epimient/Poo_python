@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 09 — Clases abstractas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 09 · Unidad 2</p>
+      <h1>Clases abstractas</h1>
+      <p class="subtitle">Contratos que las subclases no pueden ignorar</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Declarar una base con <code>abc.ABC</code> y <code>@abstractmethod</code>.</li>
+        <li>Explicar por qué una base incompleta no se instancia.</li>
+        <li>Diseñar contratos claros para las subclases.</li>
+        <li>Elegir entre clase abstracta, interfaz y <code>Protocol</code>.</li>
+        <li>Aplicar un método plantilla y duck typing verificable.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">El problema</p>
+      <h2>Una base que no representa nada</h2>
+      <pre><code>p = Personaje("Genérico", 100, 5)
+print(p.atacar())   # 5
+
+# El objeto existe, pero no es
+# un guerrero, ni un mago, ni un arquero.</code></pre>
+      <p>Peor aún: si una subclase olvida implementar <code>atacar()</code>, el error aparece en pleno combate.</p>
+      <div class="callout callout--warning">
+        Queremos que el fallo ocurra al crear el objeto, no tres rondas después.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Sintaxis</p>
+      <h2>ABC + abstractmethod</h2>
+      <pre><code>from abc import ABC, abstractmethod
+
+class Personaje(ABC):
+    @abstractmethod
+    def atacar(self) -&gt; int:
+        """Obligatorio en cada subclase concreta."""</code></pre>
+      <ul>
+        <li><code>ABC</code> activa la maquinaria de abstracción.</li>
+        <li><code>@abstractmethod</code> marca el método como pendiente.</li>
+        <li>La clase que no implemente todos los abstractos no se puede instanciar.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 1</p>
+      <h2>Estado común y contrato</h2>
+      <pre><code>class Personaje(ABC):
+    def __init__(self, nombre: str, vida: int, ataque_base: int):
+        self.nombre = nombre
+        self.vida = vida
+        self.ataque_base = ataque_base
+
+    @abstractmethod
+    def atacar(self) -&gt; int:
+        """Devuelve el daño del ataque."""
+
+    def recibir_dano(self, cantidad: int) -&gt; None:
+        self.vida = max(0, self.vida - cantidad)</code></pre>
+      <p><code>recibir_dano()</code> es concreto y se reutiliza; <code>atacar()</code> es la obligación.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 2</p>
+      <h2>Cada subclase cumple el contrato</h2>
+      <pre><code>class Guerrero(Personaje):
+    def __init__(self, nombre: str, fuerza: int = 6):
+        super().__init__(nombre, vida=120, ataque_base=10)
+        self.fuerza = fuerza
+
+    def atacar(self) -&gt; int:
+        return self.ataque_base + self.fuerza
+
+
+class Mago(Personaje):
+    def __init__(self, nombre: str, mana: int = 30):
+        super().__init__(nombre, vida=80, ataque_base=6)
+        self.mana = mana
+
+    def atacar(self) -&gt; int:
+        if self.mana &gt;= 10:
+            self.mana -= 10
+            return self.ataque_base + 15
+        return self.ataque_base // 2</code></pre>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 3</p>
+      <h2>El contrato se comprueba al crear</h2>
+      <pre><code>try:
+    Personaje("Genérico", 100, 5)
+except TypeError as error:
+    print(error)
+# Can't instantiate abstract class Personaje
+# without an implementation for abstract method 'atacar'
+
+class Incompleto(Personaje):
+    pass        # sigue siendo abstracta
+
+Incompleto("X", 10, 1)   # TypeError</code></pre>
+      <div class="callout callout--success">
+        El error llega antes de usar el objeto. Eso es precisamente lo que buscábamos.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Patrón</p>
+      <h2>Método plantilla</h2>
+      <pre><code>class Personaje(ABC):
+    @abstractmethod
+    def atacar(self) -&gt; int:
+        ...
+
+    def realizar_turno(self, enemigo: Personaje) -&gt; int:
+        dano = self.atacar()      # paso variable
+        enemigo.recibir_dano(dano)  # paso fijo
+        return dano</code></pre>
+      <p>La base fija el algoritmo; las hijas solo deciden cómo atacar. El flujo no se copia ni se sobrescribe.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Comparación</p>
+      <h2>Abstracta, interfaz y excepción manual</h2>
+      <table>
+        <tr><th>Herramienta</th><th>Qué exige</th></tr>
+        <tr><td><code>ABC</code></td><td>Herencia explícita + métodos implementados</td></tr>
+        <tr><td>Interfaz</td><td>Solo firmas; en Python se simula con un <code>ABC</code> lleno de abstractos</td></tr>
+        <tr><td><code>Protocol</code></td><td>Solo la forma: que los métodos existan</td></tr>
+      </table>
+      <pre><code>def atacar(self) -&gt; int:
+    raise NotImplementedError("Falta implementar atacar()")</code></pre>
+      <p><code>NotImplementedError</code> avisa en ejecución, pero no impide crear el objeto.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Duck typing</p>
+      <h2><code>Protocol</code>: importa la forma</h2>
+      <pre><code>from typing import Protocol, runtime_checkable
+
+@runtime_checkable
+class Curable(Protocol):
+    nombre: str
+    vida: int
+
+    def curar(self, cantidad: int) -&gt; int:
+        ...</code></pre>
+      <p>No hace falta heredar. Basta con tener los atributos y el método. <code>runtime_checkable</code> habilita <code>isinstance()</code>.</p>
+      <div class="callout callout--info">
+        La comprobación solo mira que el método exista; no valida los tipos de sus parámetros.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 4</p>
+      <h2>Aceptar cualquier objeto curable</h2>
+      <pre><code>def curar_aliado(objetivo: Curable, cantidad: int) -&gt; int:
+    curado = objetivo.curar(cantidad)
+    print(f"{objetivo.nombre} recupera {curado} PV")
+    return curado
+
+aliados: list[Curable] = [
+    Aldeano("Ragnar", 40, 120),
+    Mascota("Fénix", 10, 30),
+]</code></pre>
+      <p><code>Aldeano</code> y <code>Mascota</code> no comparten padre. Comparten comportamiento.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que rompe el contrato</h2>
+      <ul>
+        <li><strong>Olvidar <code>ABC</code>:</strong> el decorador queda sin efecto y la base se instancia.</li>
+        <li><strong>No implementar todo:</strong> el <code>TypeError</code> nombra los métodos pendientes; léelo completo.</li>
+        <li><strong>Llamar a <code>super().atacar()</code> sin cuerpo:</strong> devuelve <code>None</code>.</li>
+        <li><strong><code>isinstance()</code> con un <code>Protocol</code> sin <code>runtime_checkable</code>:</strong> lanza <code>TypeError</code>.</li>
+        <li><strong>Interfaz gigante:</strong> obliga a implementar métodos que la subclase no necesita.</li>
+      </ul>
+      <div class="callout callout--error">
+        Una subclase de un <code>ABC</code> puede seguir siendo abstracta. No hay objeto hasta completar todos los métodos.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>Diseña contratos, no copias</h2>
+      <ul>
+        <li><strong>Nivel 1:</strong> <code>Habilidad(ABC)</code> con <code>ejecutar()</code>; crea <code>BolaDeFuego</code> y <code>Curacion</code>.</li>
+        <li><strong>Nivel 2:</strong> <code>Protocol Curable</code> y una función <code>curar_equipo()</code> que acepte clases sin padre común.</li>
+        <li><strong>Nivel 3:</strong> <code>Arma(ABC)</code> con <code>dano()</code> abstracto y un método plantilla <code>describir()</code>.</li>
+      </ul>
+      <div class="callout callout--reto">
+        Reto: demuestra con un <code>try/except TypeError</code> que una subclase incompleta no se puede crear.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Cinco ideas para llevarte</h2>
+      <ul>
+        <li><code>ABC</code> + <code>@abstractmethod</code> convierten una promesa en obligación.</li>
+        <li>La base incompleta no se instancia: el error llega temprano.</li>
+        <li>El método plantilla fija el flujo y delega los pasos variables.</li>
+        <li><code>Protocol</code> acepta objetos por su forma, sin herencia.</li>
+        <li>Abstrae para obligar; usa composición para reutilizar sin acoplar.</li>
+      </ul>
+      <div class="callout callout--success">
+        Semana 10: polimorfismo a fondo y un duelo por turnos con un solo bucle para todos.
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

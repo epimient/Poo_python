@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 14 — Eventos e integración de una aplicación OO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 14 · Unidad 3</p>
+      <h1>Eventos e integración</h1>
+      <p class="subtitle">De un clic a una clase de dominio, y de vuelta a la pantalla</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Explicar qué es un callback y por qué se pasa sin paréntesis.</li>
+        <li>Elegir entre <code>command</code> y <code>bind</code> según el gesto.</li>
+        <li>Leer el objeto evento: <code>keysym</code>, <code>x</code>, <code>y</code>, <code>widget</code>.</li>
+        <li>Conectar widgets con <code>Personaje</code> y <code>Combate</code> sin mezclar capas.</li>
+        <li>Guardar y cargar una partida en JSON con errores visibles.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">El problema</p>
+      <h2>Lógica dentro del callback</h2>
+      <div class="comparison">
+        <div>
+          <strong>Acoplado</strong>
+          <pre><code>def _atacar(self):
+    self.enemigo.hp -= 12
+    self.barra["value"] = self.enemigo.hp
+    self.etiqueta["text"] = f"HP {self.enemigo.hp}"
+    if self.enemigo.hp &lt;= 0:
+        messagebox.showinfo("Fin", "Ganaste")</code></pre>
+        </div>
+        <div>
+          <strong>Separado</strong>
+          <pre><code>def _atacar(self):
+    eventos = self.combate.turno_jugador()
+    self._escribir(eventos)
+    self._refrescar()</code></pre>
+        </div>
+      </div>
+      <div class="callout callout--warning">
+        <p>La regla del daño pertenece al dominio. El callback solo delega y vuelve a pintar.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2><code>command</code> vs <code>bind</code></h2>
+      <table>
+        <thead>
+          <tr><th>Aspecto</th><th><code>command</code></th><th><code>bind</code></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Se usa en</td><td>Botones, menús, checkbuttons</td><td>Cualquier widget o la ventana</td></tr>
+          <tr><td>Dispara con</td><td>La acción principal</td><td>Un evento concreto</td></tr>
+          <tr><td>Recibe</td><td>Nada por defecto</td><td>Un objeto evento</td></tr>
+          <tr><td>Ideal para</td><td>Atacar, Guardar, Reiniciar</td><td>Teclas, clics, foco</td></tr>
+          <tr><td>Varios gestos</td><td>No</td><td>Sí</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout--info">
+        <p>Si el botón y la tecla hacen lo mismo, ambos llaman al mismo método.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>El objeto evento</h2>
+      <p>Tkinter lo crea y lo pasa a tu función cuando usas <code>bind</code>.</p>
+      <pre><code>def _al_pulsar_tecla(self, evento: tk.Event) -&gt; None:
+    print(evento.keysym)   # "a", "Return", "Escape"
+    print(evento.x)        # posición del ratón
+    print(evento.widget)   # widget que recibió el evento
+
+    if (evento.keysym or "").lower() == "a":
+        self._atacar()</code></pre>
+      <ul>
+        <li><code>keysym</code>: nombre de la tecla.</li>
+        <li><code>char</code>: carácter escrito, si existe.</li>
+        <li><code>num</code>: botón del ratón que se pulsó.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Modelo</p>
+      <h2>Ciclo evento → lógica → vista</h2>
+      <div class="flow">
+        <span class="flow-item">clic / tecla / after</span>
+        <span class="flow-item">callback</span>
+        <span class="flow-item">método del dominio</span>
+        <span class="flow-item">estado + eventos</span>
+        <span class="flow-item">_refrescar()</span>
+        <span class="flow-item">etiquetas y barras</span>
+      </div>
+      <div class="callout callout--success">
+        <p>La flecha nunca va del dominio a la vista. <code>Combate</code> no sabe que existe un <code>Label</code>.</p>
+      </div>
+      <pre><code>def _atacar(self):
+    eventos = self.combate.turno_jugador()  # lógica
+    self._escribir(eventos)                 # vista
+    self._refrescar()                       # vista</code></pre>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · dominio</p>
+      <h2>Un personaje que no conoce Tkinter</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre, clase, hp_max, ataque, defensa):
+        if hp_max &lt;= 0 or ataque &lt;= 0 or defensa &lt; 0:
+            raise ValueError("Estadísticas inválidas")
+        self.nombre = nombre
+        self.hp_max = hp_max
+        self.hp = hp_max
+        self.ataque = ataque
+        self.defensa = defensa
+
+    @property
+    def esta_vivo(self) -&gt; bool:
+        return self.hp &gt; 0
+
+    def recibir_dano(self, cantidad: int) -&gt; int:
+        aplicado = min(max(0, cantidad), self.hp)
+        self.hp -= aplicado
+        return aplicado</code></pre>
+      <p>Se puede probar en el intérprete, sin abrir una ventana.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · dominio</p>
+      <h2>El combate decide</h2>
+      <pre><code>def turno_jugador(self) -&gt; list[tuple[str, str]]:
+    if self.terminado:
+        return [("sistema", "El combate ya terminó.")]
+
+    dano = self.jugador.atacar(self.enemigo, self.rng)
+    eventos = [("jugador", f"Atacas y quitas {dano} de HP.")]
+
+    if not self.enemigo.esta_vivo:
+        self.terminado = True
+        self.ganador = self.jugador.nombre
+        eventos.append(("sistema", "¡Victoria!"))
+
+    self.log.extend(eventos)
+    return eventos</code></pre>
+      <div class="callout callout--info">
+        <p>La semilla (<code>random.Random(semilla)</code>) hace que las pruebas sean reproducibles.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · command</p>
+      <h2>El botón más corto del juego</h2>
+      <pre><code>self.btn_atacar = ttk.Button(
+    acciones,
+    text="Atacar (A)",
+    command=self._atacar,   # sin paréntesis
+)</code></pre>
+      <pre><code>def _atacar(self) -&gt; None:
+    if self.combate is None or self.combate.terminado:
+        return
+    eventos = self.combate.turno_jugador()
+    self._escribir(eventos)
+    self._refrescar()</code></pre>
+      <div class="callout callout--error">
+        <p><code>command=self._atacar()</code> ejecuta la función al construir la ventana y guarda <code>None</code>.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · bind</p>
+      <h2>Teclado y ratón</h2>
+      <pre><code>self.ventana.bind("&lt;Key&gt;", self._al_pulsar_tecla)
+self.panel_enemigo.bind("&lt;Button-1&gt;", self._inspeccionar)
+
+def _al_pulsar_tecla(self, evento: tk.Event) -&gt; None:
+    foco = self.ventana.focus_get()
+    if isinstance(foco, (tk.Entry, ttk.Entry, ttk.Combobox)):
+        return  # no atacar mientras se escribe
+    if (evento.keysym or "").lower() == "a":
+        self._atacar()</code></pre>
+      <ul>
+        <li>La tecla <strong>A</strong> y el botón comparten <code>_atacar</code>.</li>
+        <li>El clic en el panel enemigo muestra su inspección.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · persistencia</p>
+      <h2>Guardar sin guardar objetos</h2>
+      <pre><code>def a_dict(self) -&gt; dict[str, object]:
+    return {
+        "turno": self.turno,
+        "terminado": self.terminado,
+        "ganador": self.ganador,
+        "jugador": self.jugador.a_dict(),
+        "enemigo": self.enemigo.a_dict(),
+        "log": [{"tipo": t, "texto": x} for t, x in self.log],
+    }
+
+def guardar_partida(combate, ruta=RUTA_PARTIDA):
+    texto = json.dumps(combate.a_dict(), ensure_ascii=False, indent=2)
+    temporal = ruta.with_name(ruta.name + ".tmp")
+    temporal.write_text(texto + "\n", encoding="utf-8")
+    temporal.replace(ruta)
+    return ruta</code></pre>
+      <div class="callout callout--success">
+        <p>Escribir en un temporal y reemplazar evita dejar la partida a medias si el programa se cierra.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Demo</p>
+      <h2>La arena en funcionamiento</h2>
+      <pre><code>cd ejemplo-guiado
+python3 arena_tkinter.py
+python3 arena_tkinter.py --semilla 7   # pruebas repetibles</code></pre>
+      <ul>
+        <li>Elige nombre y clase: guerrero, mago o arquero.</li>
+        <li>Ataca con el botón o la tecla <strong>A</strong>; el enemigo responde solo.</li>
+        <li>HP con etiqueta y barra, más un registro de turnos.</li>
+        <li>Guardar y cargar en <code>partida_arena.json</code>.</li>
+        <li>Reiniciar cancela cualquier turno pendiente.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que rompe la integración</h2>
+      <ul>
+        <li><strong>Paréntesis de más:</strong> <code>command=self._atacar()</code>.</li>
+        <li><strong>Dormir el bucle:</strong> <code>time.sleep()</code> congela la ventana; usa <code>after</code>.</li>
+        <li><strong>Duplicar lógica:</strong> una copia en el botón y otra en la tecla.</li>
+        <li><strong>Serializar objetos:</strong> <code>json.dumps(personaje)</code> lanza <code>TypeError</code>.</li>
+        <li><strong>Confiar en el archivo:</strong> un JSON incompleto debe dar un error claro.</li>
+        <li><strong>Atacar dos veces:</strong> deshabilita el botón mientras responde el enemigo.</li>
+      </ul>
+      <div class="callout callout--warning">
+        <p>El dominio no debe importar <code>tkinter</code> ni crear widgets.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>Tu turno</h2>
+      <p><strong>Nivel 1.</strong> Conecta un botón <em>Atacar</em> a una clase <code>Personaje</code> y actualiza HP con una función de refresco.</p>
+      <p><strong>Nivel 2.</strong> Añade un registro de batalla y usa <code>bind</code> para atacar con la tecla A y cancelar con Escape.</p>
+      <p><strong>Nivel 3.</strong> Guarda y carga la partida en JSON y registra cada combate en un historial con <code>sqlite3</code>.</p>
+      <div class="callout callout--reto">
+        <p>Reto: si el archivo está dañado, la ventana debe seguir abierta y explicar el problema en una etiqueta de estado.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Lo que te llevas</h2>
+      <ul>
+        <li>Los eventos son la entrada, no el cerebro de la aplicación.</li>
+        <li><code>command</code> para la acción principal; <code>bind</code> para gestos extra.</li>
+        <li>Un callback delgado valida, delega y refresca.</li>
+        <li>Dominio, persistencia y vista se comunican en una sola dirección.</li>
+        <li>JSON explícito, validado y guardado de forma atómica.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Semana 15: lleva esta arquitectura a tu arcade del P3.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / N</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

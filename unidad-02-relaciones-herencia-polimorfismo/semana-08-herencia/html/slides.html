@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 08 — Herencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 08 · Unidad 2</p>
+      <h1>Herencia</h1>
+      <p class="subtitle">Reutilizar lo común sin duplicar código</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Distinguir una relación <strong>es-un</strong> de una relación <strong>tiene-un</strong>.</li>
+        <li>Crear una clase base y subclases con <code>super().__init__()</code>.</li>
+        <li>Sobrescribir métodos y usarlos desde una lista común.</li>
+        <li>Consultar <code>isinstance()</code>, <code>issubclass()</code> y <code>__mro__</code>.</li>
+        <li>Decidir cuándo la composición es mejor que la herencia.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Herencia = relación «es-un»</h2>
+      <p>Una subclase hereda atributos y métodos de su base y añade lo propio.</p>
+      <div class="comparison">
+        <div>
+          <strong>Herencia</strong>
+          <p>Un <code>Guerrero</code> <em>es un</em> <code>Personaje</code>. Comparte nombre, vida y ataque.</p>
+        </div>
+        <div>
+          <strong>Composición</strong>
+          <p>Un <code>Personaje</code> <em>tiene un</em> <code>Inventario</code>. Lo usa, no lo es.</p>
+        </div>
+      </div>
+      <div class="callout callout--info">
+        Si no puedes decir «X es un Y» con naturalidad, probablemente no toca heredar.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Sintaxis</p>
+      <h2>La pieza clave: <code>super()</code></h2>
+      <pre><code>class Guerrero(Personaje):
+    def __init__(self, nombre: str, fuerza: int):
+        super().__init__(nombre, vida=120, ataque_base=10)
+        self.fuerza = fuerza
+
+    def atacar(self) -&gt; int:
+        return super().atacar() + self.fuerza</code></pre>
+      <ul>
+        <li><code>class Guerrero(Personaje)</code> declara la herencia.</li>
+        <li><code>super().__init__(...)</code> inicializa la parte heredada.</li>
+        <li><code>atacar()</code> se sobrescribe y amplía el comportamiento base.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 1</p>
+      <h2>La base concentra lo común</h2>
+      <pre><code>class Personaje:
+    def __init__(self, nombre: str, vida: int, ataque_base: int):
+        self.nombre = nombre
+        self.vida = vida
+        self.ataque_base = ataque_base
+
+    def atacar(self) -&gt; int:
+        return self.ataque_base
+
+    def recibir_dano(self, cantidad: int) -&gt; None:
+        self.vida = max(0, self.vida - cantidad)</code></pre>
+      <p>Todo lo que comparten los tres personajes vive aquí una sola vez.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 2</p>
+      <h2>Sobrescribir con una regla propia</h2>
+      <pre><code>class Mago(Personaje):
+    def __init__(self, nombre: str):
+        super().__init__(nombre, vida=80, ataque_base=6)
+        self.mana = 30
+
+    def atacar(self) -&gt; int:
+        if self.mana &gt;= 10:
+            self.mana -= 10
+            return super().atacar() + 15
+        return super().atacar() // 2</code></pre>
+      <p><code>Mago</code> no copia la inicialización: solo añade <code>mana</code>. El ataque conserva el contrato de la base.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · 3</p>
+      <h2>Un bucle, tres comportamientos</h2>
+      <pre><code>equipo: list[Personaje] = [
+    Guerrero("Ragnar", fuerza=8),
+    Mago("Morgana"),
+    Arquero("Lyra", flechas=2),
+]
+
+for personaje in equipo:
+    dano = personaje.atacar()
+    print(f"{personaje.nombre}: {dano} de daño")</code></pre>
+      <div class="callout callout--success">
+        No hay ningún <code>if isinstance(...)</code>. Cada objeto responde con su propia versión de <code>atacar()</code>.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Consulta</p>
+      <h2>¿Qué es este objeto?</h2>
+      <pre><code>g = Guerrero("Ragnar", fuerza=8)
+
+isinstance(g, Guerrero)          # True
+isinstance(g, Personaje)         # True
+issubclass(Mago, Personaje)      # True
+isinstance(g, (Mago, Arquero))   # False</code></pre>
+      <table>
+        <tr><th>Función</th><th>Pregunta</th></tr>
+        <tr><td><code>isinstance(obj, Clase)</code></td><td>¿El objeto pertenece a esa clase o a una subclase?</td></tr>
+        <tr><td><code>issubclass(Hija, Base)</code></td><td>¿La clase hereda de la otra?</td></tr>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Orden de búsqueda</p>
+      <h2>MRO: el camino de Python</h2>
+      <pre><code>&gt;&gt;&gt; Guerrero.__mro__
+(&lt;class 'Guerrero'&gt;,
+ &lt;class 'Personaje'&gt;,
+ &lt;class 'object'&gt;)</code></pre>
+      <p>Cuando llamas a un método, Python lo busca de izquierda a derecha en esa tupla. <code>super()</code> avanza al siguiente eslabón, no necesariamente al padre directo.</p>
+      <div class="callout callout--info">
+        <code>object</code> es la raíz de toda clase en Python. Aparece al final de cualquier MRO.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Herencia múltiple</p>
+      <h2>El problema del diamante</h2>
+      <pre><code>class A: ...
+class B(A): ...
+class C(A): ...
+class D(B, C): ...
+
+D.__mro__   # D, B, C, A, object</code></pre>
+      <p>Python usa el algoritmo <strong>C3</strong>: <code>A</code> aparece una sola vez y el orden es coherente.</p>
+      <div class="callout callout--warning">
+        Si <code>B</code> y <code>C</code> llaman a <code>A.__init__()</code> directamente, la base se inicializa dos veces. Usa <code>super()</code> de forma cooperativa.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Diseño</p>
+      <h2>Herencia o composición</h2>
+      <pre><code>class Auto:
+    def __init__(self) -&gt; None:
+        self.motor = Motor()   # tiene-un
+
+    def arrancar(self) -&gt; str:
+        return self.motor.encender()</code></pre>
+      <table>
+        <tr><th>Herencia</th><th>Composición</th></tr>
+        <tr><td>Relación es-un</td><td>Relación tiene-un</td></tr>
+        <tr><td>Acoplamiento alto</td><td>Piezas intercambiables</td></tr>
+        <tr><td>Jerarquía estable</td><td>Variantes de comportamiento</td></tr>
+      </table>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Lo que rompe una jerarquía</h2>
+      <ul>
+        <li><strong>Olvidar <code>super().__init__()</code>:</strong> la subclase usa <code>self.nombre</code> y lanza <code>AttributeError</code>.</li>
+        <li><strong>Cambiar la firma al sobrescribir:</strong> <code>atacar(self, objetivo)</code> rompe el uso genérico.</li>
+        <li><strong>Heredar por conveniencia:</strong> reutilizar un método no convierte al hijo en un caso del padre.</li>
+        <li><strong>Abusar de <code>isinstance()</code>:</strong> si preguntas por cada tipo, el polimorfismo no está haciendo su trabajo.</li>
+      </ul>
+      <div class="callout callout--error">
+        Escribir <code>Atacar</code> con mayúscula no sobrescribe <code>atacar()</code>: crea un método nuevo y el original sigue vivo.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>Diseña tu jerarquía de enemigos</h2>
+      <ul>
+        <li><strong>Nivel 1:</strong> <code>Enemigo</code> con <code>Slime</code> y <code>Dragon</code> que sobrescriban <code>atacar()</code>.</li>
+        <li><strong>Nivel 2:</strong> añade <code>super().__init__()</code>, estadísticas y un ataque especial con coste.</li>
+        <li><strong>Nivel 3:</strong> rediseña un inventario con composición y justifica por qué no usaste herencia.</li>
+      </ul>
+      <div class="callout callout--reto">
+        Reto: un método <code>presentarse()</code> en la base debe funcionar para todos los enemigos sin conocer sus subclases.
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Cinco ideas para llevarte</h2>
+      <ul>
+        <li>La herencia modela <strong>es-un</strong>; la composición, <strong>tiene-un</strong>.</li>
+        <li>La base guarda lo común y las hijas añaden o especializan.</li>
+        <li><code>super()</code> inicializa la base y sigue el MRO.</li>
+        <li>Una lista de la clase base ejecuta el método correcto en cada objeto.</li>
+        <li><code>__mro__</code> explica el orden; el diamante se resuelve con C3.</li>
+      </ul>
+      <div class="callout callout--success">
+        Semana 09: <code>Personaje</code> se vuelve abstracto y <code>atacar()</code> pasa a ser obligatorio.
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>

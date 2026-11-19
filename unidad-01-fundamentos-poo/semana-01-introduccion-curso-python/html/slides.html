@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semana 01 — Introducción al curso y a Python</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../engine/slides.css">
+</head>
+<body>
+  <main class="deck">
+    <section class="slide slide--title is-active">
+      <p class="eyebrow">Semana 01 · Unidad 1</p>
+      <h1>Introducción al curso y a Python</h1>
+      <p class="subtitle">Del entorno de trabajo a tu primer objeto</p>
+      <p class="author">POO con Python</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Objetivos</p>
+      <h2>Al terminar podrás…</h2>
+      <ul>
+        <li>Explicar qué es la POO y diferenciar <strong>objeto</strong> de <strong>clase</strong>.</li>
+        <li>Instalar y verificar Python 3.12 en tu sistema.</li>
+        <li>Configurar VS Code, un entorno virtual y Git.</li>
+        <li>Escribir una clase con atributos, constructor y métodos.</li>
+        <li>Ejecutar y entregar scripts desde la terminal y el EVA/LMS.</li>
+      </ul>
+      <div class="callout callout--info">
+        <p>La meta de hoy no es memorizar sintaxis: es dejar un taller que funcione y entender el vocabulario que usaremos 16 semanas.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Objeto y clase</h2>
+      <p>Un <strong>objeto</strong> tiene estado (datos) y comportamiento (acciones). Una <strong>clase</strong> es el molde que describe cómo se crean esos objetos.</p>
+      <table>
+        <tr><th>Concepto</th><th>Videojuego</th><th>Python</th></tr>
+        <tr><td>Clase</td><td>El plano de una nave</td><td><code>class Nave:</code></td></tr>
+        <tr><td>Objeto</td><td>Tu nave <em>Halcon</em></td><td><code>mi_nave = Nave()</code></td></tr>
+        <tr><td>Atributo</td><td>Escudo: 80</td><td><code>self.escudo</code></td></tr>
+        <tr><td>Método</td><td>Disparar</td><td><code>def disparar(self):</code></td></tr>
+      </table>
+      <div class="callout callout--success">
+        <p>Una clase existe una vez en el código; los objetos pueden ser muchos y cada uno guarda sus propios valores.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Concepto</p>
+      <h2>Todo en Python es un objeto</h2>
+      <p>Ya has usado objetos sin llamarlos así. Un texto, un número y una lista son instancias de una clase.</p>
+      <pre><code>&gt;&gt;&gt; nombre = "Kaede"
+&gt;&gt;&gt; type(nombre)
+&lt;class 'str'&gt;
+&gt;&gt;&gt; nombre.upper()
+'KAEDE'
+&gt;&gt;&gt; type(42)
+&lt;class 'int'&gt;</code></pre>
+      <p><code>upper()</code> es un método de la clase <code>str</code>. Cuando escribes <code>nombre.upper()</code> envías un mensaje al objeto, igual que harás con <code>kaede.atacar(enemigo)</code>.</p>
+      <div class="callout callout--reto">
+        <p><strong>Reto:</strong> abre el intérprete y ejecuta <code>type()</code> sobre un entero, una lista, una tupla y una función. Todos son objetos.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Entorno</p>
+      <h2>Instalar y verificar Python 3.12</h2>
+      <pre><code># Linux (Debian/Ubuntu)
+sudo apt update
+sudo apt install python3 python3-venv python3-pip
+
+# macOS
+brew install python@3.12
+
+# Windows: descargar de python.org
+# marcar "Add python.exe to PATH"</code></pre>
+      <pre><code>python3 --version
+# Python 3.12.x
+
+# Windows, si hay varias versiones:
+py -3.12 --version</code></pre>
+      <div class="callout callout--warning">
+        <p>Si el comando devuelve otra versión, revisa qué intérprete estás llamando antes de continuar. En Windows, <code>python</code> puede apuntar a otra instalación.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Entorno</p>
+      <h2>VS Code y entorno virtual</h2>
+      <p>Instala la extensión <strong>Python</strong> de Microsoft y selecciona el intérprete del proyecto con <code>Ctrl+Shift+P</code> → <em>Python: Select Interpreter</em>.</p>
+      <pre><code># Crear el entorno desde la carpeta del proyecto
+python3 -m venv .venv
+
+# Activar en Linux y macOS
+source .venv/bin/activate
+
+# Activar en Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+
+# Comprobar
+which python
+python --version</code></pre>
+      <div class="callout callout--info">
+        <p>El prefijo <code>(.venv)</code> confirma que el entorno está activo. Para salir: <code>deactivate</code>.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Entorno</p>
+      <h2>Git y GitHub</h2>
+      <pre><code>git config --global user.name "Tu Nombre"
+git config --global user.email "tu-correo@ejemplo.com"
+
+mkdir poo-personajes
+cd poo-personajes
+git init
+printf '.venv/\n__pycache__/\n' &gt; .gitignore
+
+git add .
+git commit -m "Configura repositorio inicial del curso"
+
+git branch -M main
+git remote add origin https://github.com/TU-USUARIO/poo-personajes.git
+git push -u origin main</code></pre>
+      <p>Un buen commit completa la frase «este cambio…»: <em>agrega clase Personaje</em>. Evita <em>cambios</em> o <em>final final</em>.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · paso 1</p>
+      <h2>Definir la clase</h2>
+      <pre><code>class Personaje:
+    """Un personaje jugable con nombre, vida y ataque."""
+
+    def __init__(self, nombre: str, hp: int, ataque: int) -&gt; None:
+        self.nombre = nombre
+        self.hp = hp
+        self.ataque = ataque</code></pre>
+      <ul>
+        <li><code>class</code> crea el molde.</li>
+        <li><code>__init__</code> se ejecuta al crear el objeto.</li>
+        <li><code>self</code> es la referencia al objeto que se construye.</li>
+        <li>Cada atributo vive en el objeto, no en la clase.</li>
+      </ul>
+      <div class="callout callout--warning">
+        <p>Declara todos los atributos en <code>__init__</code>. Un atributo creado después puede no existir cuando lo necesites.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · paso 2</p>
+      <h2>Agregar comportamiento</h2>
+      <pre><code>    def presentarse(self) -&gt; str:
+        return f"Soy {self.nombre} y tengo {self.hp} HP."
+
+    def atacar(self, objetivo: "Personaje") -&gt; None:
+        dano = self.ataque
+        objetivo.hp = max(0, objetivo.hp - dano)
+        print(f"{self.nombre} ataca a {objetivo.nombre}.")
+        print(f"{objetivo.nombre} queda con {objetivo.hp} HP.")
+
+    def esta_vivo(self) -&gt; bool:
+        return self.hp &gt; 0</code></pre>
+      <p><code>atacar</code> recibe otro objeto y modifica su estado. <code>max(0, ...)</code> evita vidas negativas: una regla pequeña del dominio.</p>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Código · paso 3</p>
+      <h2>Crear tres personajes</h2>
+      <pre><code>kaede = Personaje("Kaede", 120, 18)
+rook = Personaje("Rook", 90, 24)
+nima = Personaje("Nima", 100, 14)
+equipo = [kaede, rook, nima]
+
+for personaje in equipo:
+    print(personaje.presentarse())
+
+kaede.atacar(rook)
+rook.atacar(kaede)
+nima.atacar(rook)</code></pre>
+      <p>Cada llamada a <code>Personaje(...)</code> crea una instancia independiente. <code>kaede.hp</code> y <code>rook.hp</code> son atributos distintos aunque compartan el nombre en el código.</p>
+      <pre><code>cd ejemplo-guiado
+python3 personaje.py</code></pre>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Demo</p>
+      <h2>Qué observar en la salida</h2>
+      <pre><code>=== Presentaciones ===
+Soy Kaede y tengo 120 HP.
+Soy Rook y tengo 90 HP.
+
+--- Estado del equipo ---
+Kaede    | HP 120 | ATQ 18 | en pie
+Rook     | HP  90 | ATQ 24 | en pie
+
+=== Ronda de combate ===
+Kaede ataca a Rook y causa 18 de daño.
+Rook queda con 72 HP.</code></pre>
+      <ul>
+        <li>Los tres objetos empiezan con estados distintos.</li>
+        <li>Atacar cambia solo el <code>hp</code> del objetivo.</li>
+        <li>El resto de atributos del objetivo permanece intacto.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Si ves nombres y vida actualizada, el entorno, el editor y el código funcionan juntos.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Errores comunes</p>
+      <h2>Los tropiezos de la primera semana</h2>
+      <table>
+        <tr><th>Error</th><th>Causa probable</th><th>Corrección</th></tr>
+        <tr><td><code>command not found</code></td><td>Python no está en el PATH</td><td>Prueba <code>python3</code> o <code>py -3.12</code></td></tr>
+        <tr><td><code>IndentationError</code></td><td>Espacios y tabuladores mezclados</td><td>Usa 4 espacios en todo el archivo</td></tr>
+        <tr><td><code>NameError</code></td><td>Clase usada antes de definirla</td><td>Define antes del bloque demo</td></tr>
+        <tr><td><code>AttributeError</code></td><td>Atributo mal escrito o ausente</td><td>Revísalo en <code>__init__</code></td></tr>
+        <tr><td>El script no hace nada</td><td>Falta el bloque de ejecución</td><td>Agrega <code>if __name__ == "__main__":</code></td></tr>
+      </table>
+      <div class="callout callout--error">
+        <p>No instales paquetes externos para este curso. Todo funciona con la biblioteca estándar.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Ejercicio</p>
+      <h2>De la ficha al menú</h2>
+      <p><strong>Nivel 1.</strong> <code>ficha.py</code>: variables de un personaje y una ficha alineada con daño crítico calculado.</p>
+      <p><strong>Nivel 2.</strong> <code>tres_personajes.py</code>: clase <code>Personaje</code> con validaciones, tres objetos y una ronda de ataques.</p>
+      <p><strong>Nivel 3.</strong> <code>menu_equipo.py</code>: menú de consola para listar, seleccionar y atacar. Debe resistir opciones inválidas.</p>
+      <pre><code>=== EQUIPO ===
+1. Ver personajes
+2. Seleccionar personaje
+3. Atacar al primer enemigo
+0. Salir</code></pre>
+      <div class="callout callout--reto">
+        <p><strong>Reto extra:</strong> agrega una opción para curar sin superar el HP máximo inicial.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Resumen</p>
+      <h2>Checklist de la semana</h2>
+      <div class="flow">
+        <span class="flow-item">Python 3.12</span>
+        <span class="flow-item">VS Code</span>
+        <span class="flow-item">venv</span>
+        <span class="flow-item">Git + GitHub</span>
+        <span class="flow-item">clase Personaje</span>
+        <span class="flow-item">EVA/LMS</span>
+      </div>
+      <ul>
+        <li>Clase = molde; objeto = instancia con estado propio.</li>
+        <li><code>__init__</code> construye, <code>self</code> identifica, los métodos modifican.</li>
+        <li>El entorno virtual y el repositorio son parte de la entrega.</li>
+        <li>La próxima semana: paradigmas, UML y POO frente a procedural.</li>
+      </ul>
+      <div class="callout callout--success">
+        <p>Antes de cerrar: ejecuta <code>python3 personaje.py</code>, haz commit y publica el enlace en el EVA/LMS.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls">
+    <button id="prev" aria-label="Anterior">◀</button>
+    <span id="counter">1 / 14</span>
+    <div id="dots"></div>
+    <button id="next" aria-label="Siguiente">▶</button>
+  </div>
+
+  <script src="../../../engine/slides.js"></script>
+</body>
+</html>
