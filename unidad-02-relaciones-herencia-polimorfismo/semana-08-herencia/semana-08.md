@@ -38,7 +38,7 @@ class Personaje:
 
 
 class Guerrero(Personaje):          # Guerrero es-un Personaje
-    def __init__(self, nombre: str, vida: int, fuerza: int) -> None:
+    def __init__(self, nombre: str, fuerza: int, vida: int = 120) -> None:
         super().__init__(nombre, vida)   # inicializa la parte Personaje
         self.fuerza = fuerza
 
@@ -63,7 +63,7 @@ Una subclase puede reemplazar por completo un método o ampliarlo llamando a `su
 ### Consultar la jerarquía
 
 ```python
-g = Guerrero("Ragnar", 120, 8)
+g = Guerrero("Ragnar", 8)
 print(isinstance(g, Guerrero))    # True
 print(isinstance(g, Personaje))   # True: un Guerrero también es Personaje
 print(issubclass(Guerrero, Personaje))  # True

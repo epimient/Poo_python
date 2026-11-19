@@ -15,7 +15,7 @@
 
 Cuando empiezas con Tkinter, lo natural es escribir la lógica dentro del botón: restar vida, comprobar si el enemigo murió, actualizar tres etiquetas y mostrar un mensaje. Funciona en una demo de veinte líneas. El problema aparece con un segundo botón, una tecla, la barra de vida y el guardado: el mismo bloque se copia en tres callbacks y cada cambio se hace tres veces.
 
-En un proyecto real —y en el P3 de este curso— la ventana es solo una capa. El dominio (`Personaje`, `Combate`, `Partida`) debe poder ejecutarse sin pantalla: en una prueba automática, en consola o desde otro cliente. La interfaz traduce clics y teclas en llamadas a ese dominio, y después vuelve a pintar lo que cambió. Esta semana construyes una arena de combate completa con esa separación. Al final tendrás un archivo que abre una ventana real, permite elegir guerrero, mago o arquero, atacar, ver el registro de turnos, reiniciar y guardar la partida en JSON.
+En un proyecto real —y en el P3 de este curso— la ventana es solo una capa. El dominio (`Personaje`, `Combate`, `Partida`) debe poder ejecutarse sin pantalla: en una prueba automática, en consola o desde otro cliente. La interfaz traduce clics y teclas en llamadas a ese dominio, y después vuelve a pintar lo que cambió. Esta semana construyes una arena de combate completa con esa separación. La arena final abre una ventana real y permite elegir clase, atacar, ver el registro, reiniciar y guardar en JSON.
 
 ## Concepto central
 
@@ -40,6 +40,10 @@ Usa `command` para la acción evidente del widget y `bind` para gestos adicional
 ### El objeto evento
 
 Cuando usas `bind`, Tkinter pasa un objeto evento con atributos útiles: `widget` (quién lo recibió), `x` e `y` (posición del ratón), `keysym` (nombre de la tecla, por ejemplo `"a"` o `"Return"`), `char` (carácter escrito) y `num` (botón del ratón). Puedes ignorarlo con `_evento`, pero no lo inventes: sus atributos son los que documenta Tkinter.
+
+:::info
+El evento pertenece a la interfaz. No lo guardes como parte del estado del juego ni lo pases al dominio.
+:::
 
 ### Tres capas, una dirección
 
@@ -113,7 +117,7 @@ def _atacar(self) -> None:
     self._refrescar()
 ```
 
-El callback tiene tres responsabilidades y ninguna regla: comprobar el estado, delegar y pintar.
+El callback tiene dos responsabilidades y ninguna regla: delegar y pintar.
 
 ### Paso 4: `bind` para teclado y ratón
 
@@ -128,7 +132,7 @@ def _al_pulsar_tecla(self, evento: tk.Event) -> None:
         self._atacar()
 ```
 
-La tecla **A** y el botón llaman a `_atacar`. El clic en el panel enemigo muestra sus estadísticas en el registro. Un mismo método sirve para varios gestos.
+La tecla **A** y el botón llaman a `_atacar`; el clic en el enemigo muestra su inspección.
 
 ### Paso 5: una sola función de refresco
 
@@ -142,7 +146,7 @@ def _refrescar_panel(self, ui: dict, personaje: Personaje | None) -> None:
     ui["barra"].configure(maximum=personaje.hp_max, value=personaje.hp)
 ```
 
-No actualices etiquetas sueltas en cada callback: concentra el dibujo en `_refrescar()`. Así la vista siempre refleja el estado real del dominio.
+No actualices etiquetas sueltas en cada callback: concentra el dibujo en `_refrescar()`.
 
 ### Paso 6: enemigo automático con `after`
 
@@ -156,7 +160,7 @@ El botón se deshabilita mientras el enemigo responde. Si el jugador reinicia o 
 
 ### Paso 7: guardar y cargar con JSON
 
-JSON no entiende objetos de Python. Convierte cada personaje a un diccionario y reconstruye el combate al leer:
+JSON no entiende objetos de Python: convierte cada personaje a un diccionario y reconstruye el combate al leer:
 
 ```python
 def a_dict(self) -> dict[str, object]:
@@ -211,9 +215,13 @@ La flecha nunca va del dominio a la vista. `Combate` no sabe que existe un `Labe
 - **Lógica duplicada en botón y tecla**: dos copias que se desincronizan. Un método, dos disparadores.
 - **`time.sleep()` para el turno enemigo**: congela la interfaz. Usa `after`.
 - **Guardar el objeto con `json.dumps(personaje)`**: lanza `TypeError`. Serializa con `a_dict()`.
-- **Confiar en el archivo del usuario**: un JSON incompleto debe producir un mensaje claro, no un `KeyError` sin contexto.
+- **Confiar en el archivo del usuario**: un JSON incompleto debe dar un mensaje claro, no un `KeyError` sin contexto.
 - **Atacar mientras el enemigo responde**: activa dos veces el botón y adelanta turnos. Deshabilítalo con `state="disabled"` y usa una bandera.
 - **Crear widgets desde el dominio**: acopla el juego a Tkinter y no se puede probar sin pantalla.
+
+:::error
+Un `except` vacío en un callback oculta el fallo y deja la ventana mintiendo sobre el estado real. Captura solo lo que sabes resolver y muestra el resto.
+:::
 
 ## Buenas prácticas
 
@@ -222,9 +230,9 @@ La flecha nunca va del dominio a la vista. `Combate` no sabe que existe un `Labe
 - Centraliza el refresco de la vista en una sola función.
 - Inyecta una semilla (`random.Random(semilla)`) para reproducir pruebas.
 - Valida en los bordes: entrada del usuario al iniciar y archivo al cargar.
-- Muestra los errores en la propia ventana y, si necesitas interrumpir, con `messagebox`.
+- Muestra los errores en la ventana; usa `messagebox` solo para interrumpir.
 - Cancela los `after` pendientes al reiniciar o cerrar.
-- Prueba el dominio sin Tkinter; prueba la ventana con un `xvfb-run` o una pantalla real.
+- Prueba el dominio sin Tkinter y la ventana en una pantalla real.
 
 :::reto
 Agrega un botón «Poción» con dos usos por combate. La curación debe ser un método del dominio, el contador debe guardarse en JSON y el botón debe deshabilitarse cuando no queden pociones. Sin lógica dentro del callback.
@@ -242,7 +250,7 @@ Agrega un botón «Poción» con dos usos por combate. La curación debe ser un 
 
 ## Resumen
 
-Los eventos son la entrada de una aplicación de escritorio, no su cerebro. Tkinter te ofrece `command` para la acción principal de un widget y `bind` para gestos adicionales; ambos deben apuntar a métodos delgados. El objeto evento te dice qué tecla o clic ocurrió. La lógica vive en clases de dominio que pueden probarse sin ventana, la persistencia convierte ese estado a JSON y la vista se limita a leer el estado y pintarlo. Con `after` consigues turnos automáticos sin congelar la interfaz. Esta separación es lo que se evalúa en el P3: si cambias Tkinter por otra biblioteca, `Combate` debería seguir funcionando.
+Los eventos son la entrada de una aplicación de escritorio, no su cerebro. Tkinter te ofrece `command` para la acción principal de un widget y `bind` para gestos adicionales; ambos deben apuntar a métodos delgados. La lógica vive en clases de dominio que pueden probarse sin ventana, la persistencia convierte ese estado a JSON y la vista se limita a leer el estado y pintarlo. Con `after` consigues turnos automáticos sin congelar la interfaz. Esta separación es lo que se evalúa en el P3: si cambias Tkinter por otra biblioteca, `Combate` debería seguir funcionando.
 
 ## Siguiente paso
 

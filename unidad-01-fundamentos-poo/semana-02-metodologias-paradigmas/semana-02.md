@@ -4,33 +4,33 @@
 
 ## Objetivos de aprendizaje
 
-- Distinguir los paradigmas **imperativo/procedural**, **funcional** y **orientado a objetos**.
-- Resolver el mismo problema con funciones y con clases, y comparar ambas soluciones.
-- Leer y dibujar un diagrama UML básico con clases, atributos, métodos y relaciones.
-- Describir las fases del ciclo de desarrollo de software y el papel de las metodologías ágiles.
-- Usar Git como herramienta de trabajo diario: ramas, commits e issues.
-- Explicar cómo se evalúa el curso y qué se espera en los proyectos P1, P2 y P3.
+- Distinguir los paradigmas **procedural**, **funcional** y **orientado a objetos**.
+- Resolver el mismo problema con funciones y con clases.
+- Leer y dibujar un UML básico con clases y relaciones.
+- Describir el ciclo de desarrollo y las metodologías ágiles.
+- Usar Git a diario: ramas, commits e issues.
+- Explicar la evaluación por proyectos P1, P2 y P3.
 
 ## ¿Por qué importa?
 
-Dos equipos pueden recibir el mismo enunciado —«un combate por turnos»— y producir programas muy distintos. Uno llena una función de cien líneas con condicionales; el otro reparte responsabilidades entre personajes, armas y una arena. Ambos pueden funcionar el viernes. La diferencia se nota el lunes, cuando hay que agregar un nuevo tipo de enemigo o corregir un daño mal calculado.
+Dos equipos reciben el mismo enunciado —«un combate por turnos»— y producen programas muy distintos. Uno llena una función de cien líneas con condicionales; el otro reparte responsabilidades entre personajes, armas y una arena. La diferencia se nota el lunes, cuando hay que agregar un enemigo nuevo o corregir un daño mal calculado.
 
 Un **paradigma** es una manera de organizar el pensamiento y el código. No es una religión ni una marca de lenguaje. Python permite escribir procedural, funcional y orientado a objetos en el mismo archivo. Saber elegir te evita dos extremos: convertir todo en clases innecesarias o dejar crecer un script que nadie quiere tocar.
 
-La metodología responde a otra pregunta: ¿cómo se construye el software en equipo y cómo se sabe si va bien? Un proyecto escolar puede parecer un examen individual, pero en la práctica se parece más a un trabajo por entregas: alcance, fechas, revisión y ajuste. Esta semana conecta esas ideas con las herramientas que ya tienes: Git, GitHub y el EVA/LMS.
+La metodología responde a otra pregunta: cómo se construye en equipo y cómo se sabe si va bien. Todo proyecto tiene alcance, fechas, revisión y ajuste; esta semana conecta esas ideas con Git, GitHub y el EVA/LMS.
 
 ## Concepto central
 
 ### Imperativo, procedural y funcional
 
-El **imperativo** describe el programa como una secuencia de instrucciones que cambian el estado; el **procedural** lo organiza en funciones. Es directo para cálculos pequeños, pero el estado se dispersa cuando la vida, el turno y el inventario viven en variables que muchas funciones modifican.
+El **imperativo** describe el programa como una secuencia de instrucciones que cambian el estado; el **procedural** lo organiza en funciones. Es directo, pero el estado se dispersa cuando la vida, el turno y el inventario viven en variables que muchas funciones modifican.
 
 ```python
 def calcular_dano(ataque: int, defensa: int) -> int:
     return max(1, ataque - defensa)
 ```
 
-El **funcional** prefiere transformar datos sin mutar los originales. En Python no es puro, pero sus ideas —funciones pequeñas y sin efectos secundarios— sirven para filtrar inventarios o calcular totales.
+El **funcional** transforma datos sin mutar los originales. En Python no es puro, pero sus funciones pequeñas y sin efectos secundarios sirven para filtrar inventarios o calcular totales.
 
 ```python
 enemigos = [("Slime", 30), ("Gólem", 120), ("Murciélago", 45)]
@@ -65,11 +65,7 @@ La ventaja es la **cohesión**: las reglas del personaje viven con sus datos. Si
 | Validación | Repetida en cada función | Concentrada en el constructor |
 | Riesgo | Estado global difícil de rastrear | Jerarquías innecesarias |
 
-No hay un ganador universal. Un cálculo de IVA no necesita una clase `CalculadoraDeIVA`; un RPG con héroes, ítems y partidas sí se beneficia de objetos. La pregunta es: **¿hay entidades con estado y reglas propias?** Si la respuesta es sí, la POO es buena candidata.
-
-:::info
-En la práctica se combinan paradigmas. Un programa orientado a objetos usa funciones auxiliares y comprensiones de listas todo el tiempo.
-:::
+No hay ganador universal: un cálculo de IVA no necesita una clase, pero un RPG con héroes e ítems sí se beneficia. La pregunta es: **¿hay entidades con estado y reglas propias?**
 
 ### UML básico
 
@@ -127,10 +123,10 @@ La evaluación es **100 % por proyectos**, sin exámenes escritos:
 | P2 | 11 | Equipos de 2–3 | 30 % | Arcade de combate por turnos |
 | P3 | 15 | Equipos de 2–3 | 45 % | Arcade con interfaz gráfica |
 
-Cada proyecto tiene dos criterios que pesan 50/50. Se evalúa que el código ejecute, que las validaciones funcionen, que el repositorio tenga historial y que cada integrante sustente su parte. Un proyecto que no ejecuta obtiene como máximo 3.0; una copia obtiene 0.
+Cada proyecto tiene dos criterios que pesan 50/50. Se evalúa ejecución, validaciones, historial y sustentación individual. Un proyecto que no ejecuta obtiene máximo 3.0; una copia, 0.
 
 :::warning
-Guardar el proyecto para el último fin de semana es la estrategia más costosa. La clase `Personaje` de hoy será la base del P1, y el combate de esta semana reaparecerá en el P2.
+No dejes el proyecto para el último fin de semana. La clase `Personaje` de hoy será la base del P1, y el combate de esta semana reaparecerá en el P2.
 :::
 
 ## Código paso a paso
@@ -176,11 +172,7 @@ cd ejemplo-guiado
 python3 paradigmas.py
 ```
 
-El script imprime dos bloques: `PROCEDURAL` y `POO`. Al final muestra que ambos terminan con el mismo estado. La diferencia está en dónde vive la responsabilidad, no en el número final.
-
-:::success
-Si puedes explicar por qué las dos versiones producen el mismo resultado, ya entendiste que un paradigma es una forma de organizar el código, no una fórmula distinta.
-:::
+El script imprime dos bloques, `PROCEDURAL` y `POO`, y ambos terminan con el mismo estado. La diferencia está en dónde vive la responsabilidad.
 
 ## Diagrama / modelo (si aplica)
 
@@ -210,58 +202,51 @@ Si puedes explicar por qué las dos versiones producen el mismo resultado, ya en
                  └──────────────────────────┘
 ```
 
-En el diagrama, `Equipo` conoce a varios `Personaje`. La asociación no significa que el equipo sea dueño de sus vidas: si un personaje se elimina del equipo, el objeto puede seguir existiendo. Esa distinción será importante cuando estudiemos agregación y composición.
+En el diagrama, `Equipo` conoce a varios `Personaje`. La asociación no implica propiedad: si un personaje sale del equipo, el objeto puede seguir existiendo. Esa distinción importará al estudiar composición.
 
 ## Errores comunes
 
 | Error | Qué revela | Cómo corregirlo |
 |---|---|---|
 | Crear una clase para cada cosa, incluso para sumar dos números | Abstracción innecesaria | Usa funciones si no hay estado ni reglas propias |
-| Usar diccionarios para todo y llamarlo POO | Se agruparon datos, no comportamiento | Pregunta qué operaciones pertenecen a la entidad |
-| Un diagrama UML con cada método privado y cada variable temporal | Exceso de detalle | Modela solo lo necesario para comunicar el diseño |
+| Usar diccionarios para todo y llamarlo POO | Datos sin comportamiento | Pregunta qué operaciones pertenecen a la entidad |
+| UML con cada método privado y cada variable temporal | Exceso de detalle | Modela solo lo necesario para comunicar |
 | `git add .` sin revisar | Se suben archivos temporales o secretos | Revisa `git status` y usa `.gitignore` |
 | Trabajar semanas sin commit y subir todo al final | No hay historial ni respaldo | Commits pequeños por avance |
-| Confundir agile con «no planificar» | Se improvisa y se incumple | Plan corto, prioridades y revisión semanal |
-| Copiar una solución de otro equipo | Falta de aprendizaje y riesgo académico | Sustenta tu código; la copia vale 0 |
+| Copiar una solución de otro equipo | Riesgo académico y nulo aprendizaje | Sustenta tu código; la copia vale 0 |
 
 :::error
-No compares paradigmas contando líneas. Una solución con más líneas puede ser más clara y mantenible; una con menos puede esconder el estado en variables globales. Compara cohesión, legibilidad y facilidad para cambiar una regla.
+No compares paradigmas contando líneas. Compara cohesión, legibilidad y facilidad para cambiar una regla.
 :::
 
 ## Buenas prácticas
 
 - **Modela antes de codificar.** Cinco minutos de UML ahorran una hora de refactorización.
-- **Empieza por el caso más simple.** Un combate de dos personajes antes de una arena con turnos.
-- **Nombra con el dominio.** `atacar`, `curar`, `equipo`, `inventario`; evita `dato1`, `procesar`, `hacer`.
+- **Empieza por el caso más simple.** Un combate de dos personajes antes de una arena.
+- **Nombra con el dominio.** `atacar`, `curar`, `equipo`; evita `dato1` o `procesar`.
 - **Una responsabilidad por clase.** `Personaje` no imprime menús ni guarda archivos.
 - **Prueba la salida esperada**, no solo que el programa «corra».
-- **Documenta las decisiones.** Un README con el diagrama y las reglas del juego vale más que un comentario por línea.
+- **Documenta las decisiones** en el README, no en un comentario por línea.
 - **Trabaja en ramas pequeñas** y vuelve a `main` solo cuando el código ejecute.
-- **Reserva tiempo para integrar.** Unir dos ramas siempre cuesta más de lo que parece.
-
-:::reto
-Toma un script procedural de una semana anterior, dibuja sus entidades en papel y propón una clase para la entidad principal. No lo reescribas todavía: primero justifica qué estado y qué comportamiento agruparías. La Semana 03 te dará las herramientas para implementarlo.
-:::
 
 ## Checklist de la semana
 
-- [ ] Puedo definir paradigma y nombrar tres paradigmas con un ejemplo.
+- [ ] Defino paradigma y nombro tres con un ejemplo.
 - [ ] Expliqué una diferencia concreta entre procedural y POO.
 - [ ] Ejecuté `paradigmas.py` y comparé las dos salidas.
-- [ ] Dibujé un diagrama UML con al menos dos clases y una relación.
-- [ ] Identifico las fases del ciclo de desarrollo y una práctica ágil.
-- [ ] Usé una rama y un commit con mensaje claro en mi repositorio.
+- [ ] Dibujé un UML con al menos dos clases y una relación.
+- [ ] Identifico las fases del ciclo y una práctica ágil.
+- [ ] Usé una rama y un commit con mensaje claro.
 - [ ] Entiendo los pesos y requisitos de P1, P2 y P3.
-- [ ] Registré mi plan de trabajo semanal en el EVA/LMS.
 
 ## Resumen
 
-Un paradigma organiza el código; una metodología organiza el trabajo. El enfoque procedural piensa en funciones y pasos; el funcional, en transformaciones sin estado mutable; el orientado a objetos, en entidades con datos y comportamiento. Python permite mezclarlos, y la elección depende de la forma del problema.
+Un paradigma organiza el código; una metodología organiza el trabajo. El procedural piensa en funciones y pasos; el funcional, en transformaciones sin estado mutable; la POO, en entidades con datos y comportamiento. Python permite mezclarlos y la elección depende de la forma del problema.
 
-UML te da un lenguaje para discutir el diseño antes de escribir código. El ciclo de desarrollo y las prácticas ágiles te recuerdan que el software se construye por incrementos y se corrige con evidencia. Git registra ese proceso y lo hace recuperable.
+UML da un lenguaje para discutir el diseño antes de codificar. El ciclo de desarrollo y las prácticas ágiles recuerdan que el software se construye por incrementos y se corrige con evidencia. Git registra el proceso y lo hace recuperable.
 
-La evaluación del curso refleja esa filosofía: tres proyectos, pesos 25/30/45, trabajo individual y en equipo, con sustentación. No se premia memorizar definiciones, sino construir, explicar y mejorar.
+La evaluación refleja esa filosofía: tres proyectos con pesos 25/30/45, individuales y en equipo, con sustentación.
 
 ## Siguiente paso
 
-La próxima semana entrarás de lleno en la sintaxis de la POO: definir clases, crear objetos, distinguir atributos de instancia y de clase, y usar `__init__` con criterio. Llega con un diagrama sencillo de tu personaje y con el repositorio limpio; lo convertirás en código ejecutable.
+La próxima semana entrarás en la sintaxis de la POO: clases, objetos, atributos de instancia y de clase, y `__init__` con criterio. Trae un diagrama sencillo de tu personaje y el repositorio limpio.

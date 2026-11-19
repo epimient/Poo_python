@@ -109,7 +109,7 @@ tk.Label(raiz, text="v1.0").place(relx=1.0, rely=1.0, anchor="se", x=-8, y=-8)
 | Superposición | no | no | sí |
 | Curva de aprendizaje | baja | media | baja, pero frágil |
 
-Dos reglas prácticas:
+Dos reglas:
 
 - No mezcles `pack` y `grid` **en el mismo contenedor**. Puedes usar `pack` en la raíz y `grid` dentro de un `Frame` hijo; lo que no puede convivir son ambos gestores administrando hijos del mismo padre.
 - Si usas `grid`, configura `weight` para que el contenido se expanda.

@@ -279,5 +279,11 @@ const RESOURCES = [
     desc: 'Artículos y ejemplos adicionales de POO.',
     url: 'https://realpython.com/python3-object-oriented-programming/',
     label: 'realpython.com'
+  },
+  {
+    title: 'Planeador oficial del curso',
+    desc: 'Resultados de aprendizaje, criterios y rúbrica.',
+    url: 'docs/Planeador_Programacion%20Orientada%20a%20Objetos.pdf',
+    label: 'PDF · docs/'
   }
 ];

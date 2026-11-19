@@ -88,29 +88,36 @@
           </button>
           <div class="tree-items" data-unit-items="${unit.id}">
       `);
-      unit.weeks.forEach(week => {
-        parts.push(`
-          <details class="tree-item" data-week-item="${week.num}">
-            <summary><span class="week-num">${pad(week.num)}</span><span>${escapeHtml(week.title)}</span></summary>
-            <div class="tree-subs">
-              <a href="#/semana-${week.num}/doc" data-week="${week.num}" data-action="doc">Documento</a>
-              <a href="#/semana-${week.num}/slides" data-week="${week.num}" data-action="slides">Slides</a>
-              <a href="#/semana-${week.num}/example" data-week="${week.num}" data-action="example">Ejemplo guiado</a>
-              <a href="#/semana-${week.num}/exercises" data-week="${week.num}" data-action="exercises">Ejercicios</a>
-              <a href="#/semana-${week.num}/faq" data-week="${week.num}" data-action="faq">FAQ</a>
-            </div>
-          </details>
-        `);
-      });
       const project = PROJECTS.find(p => p.unit === unit.id);
-      if (project) {
-        parts.push(`
-          <a class="tree-link" href="#/proyecto-${project.id}" data-project="${project.id}">
-            <span>${project.id.toUpperCase()} · ${escapeHtml(project.title.split('·')[1].trim())}</span>
-            <span class="tag">${project.weight}%</span>
-          </a>
-        `);
-      }
+      const entries = unit.weeks.map(week => ({ type: 'week', num: week.num, week }));
+      if (project) entries.push({ type: 'project', num: project.num, project });
+      entries.sort((a, b) => a.num - b.num);
+
+      entries.forEach(entry => {
+        if (entry.type === 'week') {
+          const week = entry.week;
+          parts.push(`
+            <details class="tree-item" data-week-item="${week.num}">
+              <summary><span class="week-num">${pad(week.num)}</span><span>${escapeHtml(week.title)}</span></summary>
+              <div class="tree-subs">
+                <a href="#/semana-${week.num}/doc" data-week="${week.num}" data-action="doc">Documento</a>
+                <a href="#/semana-${week.num}/slides" data-week="${week.num}" data-action="slides">Slides</a>
+                <a href="#/semana-${week.num}/example" data-week="${week.num}" data-action="example">Ejemplo guiado</a>
+                <a href="#/semana-${week.num}/exercises" data-week="${week.num}" data-action="exercises">Ejercicios</a>
+                <a href="#/semana-${week.num}/faq" data-week="${week.num}" data-action="faq">FAQ</a>
+              </div>
+            </details>
+          `);
+        } else {
+          const p = entry.project;
+          parts.push(`
+            <a class="tree-link" href="#/proyecto-${p.id}" data-project="${p.id}">
+              <span>${p.id.toUpperCase()} · ${escapeHtml(p.title.split('·')[1].trim())}</span>
+              <span class="tag">${p.weight}%</span>
+            </a>
+          `);
+        }
+      });
       parts.push('</div></div>');
     });
 

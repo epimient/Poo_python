@@ -38,7 +38,7 @@ class Personaje:
         return f"Soy {self.nombre} y tengo {self.hp} hp."
 ```
 
-`aria.saludar()` ejecuta el método con `self = aria`. No hace falta pasar el objeto: Python lo enlaza solo. Ese proceso se llama *binding* y es la razón por la que `Personaje.saludar(aria)` y `aria.saludar()` producen lo mismo.
+`aria.saludar()` ejecuta el método con `self = aria`; Python enlaza el objeto solo. Por eso `Personaje.saludar(aria)` y `aria.saludar()` son equivalentes.
 
 ### Constructores con valores por defecto
 
@@ -102,7 +102,7 @@ class Personaje:
 print(Personaje.calcular_danio(18, 4))  # 14
 ```
 
-Si no usa `self` ni `cls` y tampoco toca atributos de la clase, un `@staticmethod` es honesto. Si no tiene relación con el dominio de la clase, mejor una función suelta en el módulo.
+Si no usa `self` ni `cls`, un `@staticmethod` es honesto; si no tiene relación con el dominio, mejor una función suelta en el módulo.
 
 | Decorador | Primer parámetro | Puede tocar el objeto | Uso típico |
 |---|---|---|---|
@@ -179,24 +179,7 @@ def __repr__(self) -> str:
 
 ## Código paso a paso
 
-**Paso 1. Métodos que cambian el estado.** Sin validación todavía, para ver el problema.
-
-```python
-class Personaje:
-    def __init__(self, nombre: str, hp: int = 100) -> None:
-        self.nombre = nombre
-        self.hp = hp
-
-    def recibir_danio(self, cantidad: int) -> int:
-        self.hp -= cantidad
-        return cantidad
-
-aria = Personaje("Aria", 10)
-aria.recibir_danio(50)
-print(aria.hp)  # -40: estado imposible
-```
-
-**Paso 2. Cierra la puerta con una propiedad.** El daño se acota en el método y el hp se valida en el setter.
+**Paso 1. Cierra la puerta con una propiedad.** El daño se acota en el método y el hp se valida en el setter.
 
 ```python
 class Personaje:
@@ -221,7 +204,7 @@ class Personaje:
         return antes - self._hp
 ```
 
-**Paso 3. Añade una fábrica y una utilidad.** `desde_ficha` valida el formato y `calcular_danio` concentra la fórmula.
+**Paso 2. Añade una fábrica y una utilidad.** `desde_ficha` valida el formato y `calcular_danio` concentra la fórmula.
 
 ```python
     @classmethod
@@ -236,47 +219,7 @@ class Personaje:
         return max(1, ataque - defensa)
 ```
 
-**Paso 4. Aplica lo mismo a una cuenta.** El saldo solo cambia por operaciones válidas y cada movimiento queda registrado.
-
-```python
-class CuentaBancaria:
-    def __init__(self, titular: str, saldo_inicial: float = 0.0) -> None:
-        if not titular.strip():
-            raise ValueError("El titular no puede estar vacío.")
-        if saldo_inicial < 0:
-            raise ValueError("El saldo inicial no puede ser negativo.")
-        self.titular = titular.strip()
-        self._saldo = round(saldo_inicial, 2)
-        self._historial: list[str] = []
-
-    @property
-    def saldo(self) -> float:
-        return self._saldo
-
-    def depositar(self, monto: float) -> None:
-        if monto <= 0:
-            raise ValueError("El monto debe ser mayor que cero.")
-        self._saldo = round(self._saldo + monto, 2)
-        self._historial.append(f"Depósito: +{monto:.2f}")
-
-    def retirar(self, monto: float) -> None:
-        if monto <= 0:
-            raise ValueError("El monto debe ser mayor que cero.")
-        if monto > self._saldo:
-            raise ValueError("Saldo insuficiente.")
-        self._saldo = round(self._saldo - monto, 2)
-        self._historial.append(f"Retiro: -{monto:.2f}")
-```
-
-**Paso 5. Da una representación decente.** `print` usa `__str__`; la consola interactiva y `repr()` usan `__repr__`.
-
-```python
-    def __str__(self) -> str:
-        return f"Cuenta de {self.titular}: ${self._saldo:,.2f}"
-
-    def __repr__(self) -> str:
-        return f"CuentaBancaria(titular={self.titular!r}, saldo={self._saldo:.2f})"
-```
+**Paso 3. Aplica lo mismo a una cuenta.** `depositar` rechaza montos no positivos y `retirar` comprueba además el saldo antes de restar. El saldo solo cambia por operaciones válidas y cada movimiento se registra en `_historial`.
 
 ## Diagrama / modelo
 

@@ -92,7 +92,7 @@ estilo.map(
 ```
 
 :::warning
-Algunos temas ignoran ciertas opciones de color. Si un `background` no aparece, prueba con el tema `clam`, que respeta más configuraciones que el tema nativo. No es un error de tu código: es una limitación del tema.
+Algunos temas ignoran ciertas opciones de color. Si un `background` no aparece, prueba con `clam`, que respeta más configuraciones. No es un error de tu código: es una limitación del tema.
 :::
 
 ### Formularios: variables y estado
@@ -111,7 +111,7 @@ ttk.Combobox(
 ttk.Spinbox(marco, from_=1, to=60, textvariable=self.var_nivel).grid(row=2, column=1)
 ```
 
-`state="readonly"` en el `Combobox` impide escribir valores inventados: el usuario solo puede elegir de la lista. En un `Entry`, `state="disabled"` bloquea el campo; para volver a habilitarlo se usa `state="normal"`.
+`state="readonly"` impide escribir valores inventados: solo se elige de la lista. En un `Entry`, `state="disabled"` bloquea el campo; `state="normal"` lo habilita.
 
 Las variables permiten una vista previa en vivo: `trace_add("write", ...)` ejecuta una función cuando el valor cambia:
 
@@ -168,7 +168,7 @@ Una validación correcta cumple cinco condiciones:
 5. **Devuelve el foco** al campo que hay que corregir.
 
 :::success
-El mensaje de error es parte de la interfaz, no un castigo. Un buen error dice qué pasó, dónde y cómo corregirlo.
+El mensaje de error es parte de la interfaz. Un buen error dice qué pasó, dónde y cómo corregirlo.
 :::
 
 ### Feedback y jerarquía visual
@@ -287,7 +287,7 @@ Añade una pestaña «Inventario» con un `Notebook` que muestre una lista de ob
 
 ## Resumen
 
-`ttk` aporta controles temáticos y consistentes: `Entry`, `Combobox`, `Spinbox`, `Treeview`, `Notebook`. Los estilos con `ttk.Style` evitan repetir colores y fuentes, y los contenedores con título convierten una ventana en zonas comprensibles.
+`ttk` aporta controles temáticos y consistentes: `Entry`, `Combobox`, `Spinbox`, `Treeview`, `Notebook`. Los estilos con `ttk.Style` evitan repetir colores y fuentes; los contenedores con título crean zonas comprensibles.
 
 Un formulario profesional alinea etiquetas, valida en el modelo, muestra mensajes claros y confirma cada acción. La jerarquía visual no decora: decide si la ventana se explora o se abandona.
 

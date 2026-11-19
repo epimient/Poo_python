@@ -49,7 +49,7 @@ class Personaje(ABC):
 ```python
 p = Personaje("Genérico", 100)
 # TypeError: Can't instantiate abstract class Personaje
-# with abstract method atacar
+# without an implementation for abstract method 'atacar'
 ```
 
 El error no es un capricho: el objeto estaría incompleto. La base prometió que todo personaje sabe atacar y no puede cumplir la promesa por sí misma.
@@ -109,7 +109,7 @@ def curar_aliado(objetivo: Curable, cantidad: int) -> None:
     print(f"{objetivo.nombre} recupera {curado} PV")
 ```
 
-Cualquier objeto con `nombre` y `curar()` funciona: un `Sacerdote`, una `Poción`, un `Altar`. No hay herencia ni registro. `runtime_checkable` permite usar `isinstance(obj, Curable)`, aunque solo comprueba que los métodos existan, no que las firmas sean correctas.
+Cualquier objeto con `nombre` y `curar()` funciona: un `Aldeano`, una `Mascota` o una `Fuente` curativa. No hay herencia ni registro. `runtime_checkable` permite usar `isinstance(obj, Curable)`, aunque solo comprueba que los métodos existan, no que las firmas sean correctas.
 
 ### Método plantilla
 
@@ -121,17 +121,13 @@ class Personaje(ABC):
     def atacar(self) -> int:
         ...
 
-    @abstractmethod
-    def gastar_recurso(self) -> None:
-        ...
-
-    def realizar_turno(self) -> int:
+    def realizar_turno(self, enemigo: "Personaje") -> int:
         dano = self.atacar()
-        self.gastar_recurso()
+        enemigo.recibir_dano(dano)
         return dano
 ```
 
-`realizar_turno()` no se sobrescribe: siempre hace lo mismo, en el mismo orden. Lo que cambia es cómo ataca y qué recurso gasta cada subclase. Es una forma elegante de reutilizar un flujo sin copiarlo.
+`realizar_turno()` no se sobrescribe: siempre hace lo mismo, en el mismo orden. Lo que cambia es cómo ataca cada subclase. Es una forma elegante de reutilizar un flujo sin copiarlo.
 
 :::warning
 No conviertas la base en una lista de deseos. Si tiene doce métodos abstractos, cada subclase está obligada a implementar doce cosas, incluso las que no usa. Divide el contrato en piezas más pequeñas.
@@ -198,6 +194,10 @@ except TypeError as error:
 
 ```python
 class Mago(Personaje):
+    def __init__(self, nombre: str, mana: int = 30) -> None:
+        super().__init__(nombre, vida=80, ataque_base=6)
+        self.mana = mana
+
     def atacar(self) -> int:
         if self.mana >= 10:
             self.mana -= 10
@@ -205,8 +205,9 @@ class Mago(Personaje):
         return self.ataque_base
 
 
+# enemigo es otra instancia concreta de Personaje
 for personaje in equipo:
-    dano = personaje.realizar_turno()
+    dano = personaje.realizar_turno(enemigo)
     print(f"{personaje.nombre} causa {dano}")
 ```
 
@@ -231,15 +232,14 @@ def curar_equipo(objetivos: list[Curable], cantidad: int) -> None:
         ─────────────────────────
         atacar()          ← abstracto, obligatorio
         recibir_dano()    ← concreto, reutilizable
-        realizar_turno()  ← plantilla: atacar + gastar
+        realizar_turno()  ← plantilla: atacar + aplicar daño
                     ▲
         ┌───────────┼───────────┐
     Guerrero       Mago      Arquero
     atacar()      atacar()   atacar()
-    gastar()      gastar()   gastar()
 ```
 
-Las subclases no pueden existir sin implementar `atacar()` y `gastar_recurso()`. La base aporta el flujo y el estado común.
+Las subclases no pueden existir sin implementar `atacar()`. La base aporta el flujo y el estado común.
 
 ## Errores comunes
 

@@ -112,7 +112,7 @@ No aprendas las cuatro: elige una y termina algo pequeño en dos semanas. Un pro
 
 ## Código paso a paso
 
-El ejemplo es un revisor orientado a objetos que usa `ast` para reportar cinco señales: clase sin docstring, atributos públicos, método largo, `print` en la lógica y falta de type hints.
+El ejemplo usa `ast` para reportar cinco señales: clase sin docstring, atributos públicos, método largo, `print` en la lógica y falta de type hints.
 
 Primero, un objeto que representa un hallazgo y valida su severidad:
 
@@ -132,7 +132,7 @@ class Hallazgo:
         self.severidad = severidad
 ```
 
-La clase base `Regla` define el contrato: cada regla hereda, sobrescribe `revisar` y usa `_crear`. Una regla real busca `print` dentro de funciones que no sean de presentación:
+La clase base `Regla` define el contrato: cada regla hereda, sobrescribe `revisar` y usa `_crear`. Una regla real busca `print` fuera de las funciones de presentación:
 
 ```python
 class PrintEnLogica(Regla):
@@ -146,7 +146,7 @@ class PrintEnLogica(Regla):
             if isinstance(nodo, ast.FunctionDef) and nodo.name not in self.EXENTOS:
                 for interno in ast.walk(nodo):
                     if isinstance(interno, ast.Call) and getattr(interno.func, "id", "") == "print":
-                        hallazgos.append(self._crear(interno, f"print en '{nodo.name}'"))
+                        hallazgos.append(self._crear(interno, f"'print' dentro de '{nodo.name}'"))
         return hallazgos
 ```
 
